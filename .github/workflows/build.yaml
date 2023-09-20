@@ -1,0 +1,25 @@
+name: Build
+on:
+  push:
+    branches:
+      - 'main'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # ratchet:actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # ratchet:actions/setup-go@v2
+        with:
+          go-version: '1.20'
+      - name: Install BCC Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y bpfcc-tools libbpfcc-dev  # Install BCC dependencies
+          sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
+      - name: Build and Test
+        run: |-
+          make build-gh
