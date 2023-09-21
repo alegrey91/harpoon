@@ -12,6 +12,39 @@
 
 This tool is designed to provide fine-grained visibility into the syscalls made by specific functions within a program. Unlike traditional system call tracing tools like `strace`, which capture all syscalls made during the entire program's execution, this project leverages the power of eBPF to pinpoint and monitor system calls exclusively within targeted functions.
 
+## Getting Started
+
+First of all, identify the symbol of the function you want to trace from the binary. Let's suppose you want to trace the function `doSomething()` present in the program `./binary`. In order to get the symbol from the binary itself, you need to use the following command:
+
+```sh
+objdump --syms ./binary | grep doSomething
+0000000000480720 g     F .text  0000000000000067 main.doSomething
+```
+
+So, `main.doSomething` is the symbol of the function we want to trace using `harpoon`.
+
+Then, let's run `harpoon` to extract the syscalls from the function `main.doSomething`:
+
+```sh
+harpoon -f main.doSomething ./binary
+[+] start tracing
+[+] stop tracing
+[ syscall list ]
+read
+sigaltstack
+gettid
+close
+mmap
+fcntl
+write
+futex
+openat
+clone
+getrlimit
+```
+
+That's the list of syscalls that have been executed during the tracked function!
+
 ## References
 
 I would like to point out that without the references mentioned below this project would never have come to life.
