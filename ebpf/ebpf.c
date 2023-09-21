@@ -7,7 +7,7 @@ BPF_PERF_OUTPUT(events);
 // data_t used to store the data received from the event
 struct syscall_data {
 	// the syscall number
-	u32 id;
+	u32 syscall_id;
 	// tracing status (1 start, 2 stop)
 	u32 tracingStatus;
 };
@@ -59,7 +59,7 @@ int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
 	}
 
 	int id = (int)args->id;
-	data.id = id;
+	data.syscall_id = id;
 	events.perf_submit(args, &data, sizeof(data));
 	return 0;
 }

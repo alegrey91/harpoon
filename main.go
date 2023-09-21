@@ -19,7 +19,7 @@ import (
 
 type event struct {
 	// syscall number
-	ID uint32
+	SyscallID uint32
 	// Stops tracing syscalls if true
 	TracingStatus uint32
 }
@@ -132,7 +132,7 @@ func main() {
 				p, _ := os.FindProcess(os.Getpid())
 				p.Signal(os.Interrupt)
 			default:
-				syscalls[e.ID]++
+				syscalls[e.SyscallID]++
 			}
 		}
 	}()
