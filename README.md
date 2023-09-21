@@ -20,5 +20,6 @@ For that reason, the code takes a lot of inspiration from the references listed 
 * https://www.grant.pizza/blog/tracing-go-functions-with-ebpf-part-1/
 * https://itnext.io/seccomp-in-kubernetes-part-2-crafting-custom-seccomp-profiles-for-your-applications-c28c658f676e
 * https://github.com/containers/oci-seccomp-bpf-hook
+* https://sysdig.com/blog/ebpf-offensive-capabilities/
 * *Liz Rice. Learning eBPF. O'Reilly, 2023*
 
