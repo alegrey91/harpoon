@@ -7,24 +7,24 @@ BPF_PERF_OUTPUT(events);
 // data_t used to store the data received from the event
 struct syscall_data {
 	// the syscall number
-    u32 id;
-    // tracing status (1 start, 2 stop)
-    u32 tracingStatus;
+	u32 id;
+	// tracing status (1 start, 2 stop)
+	u32 tracingStatus;
 };
 
 // imlement strncmp function
 // https://sysdig.com/blog/ebpf-offensive-capabilities/
 static __always_inline __u64
 __bpf_strncmp(const void *x, const void *y, __u64 len) {
-    for (int i = 0; i < len; i++) {
-        if (((char *)x)[i] != ((char *)y)[i]) {
-            return ((char *)x)[i] - ((char *)y)[i];
-        }
-        else if (((char *)x)[i] == '\0') {
-            return 0;
-        }
-    }
-    return 0;
+	for (int i = 0; i < len; i++) {
+		if (((char *)x)[i] != ((char *)y)[i]) {
+			return ((char *)x)[i] - ((char *)y)[i];
+		}
+		else if (((char *)x)[i] == '\0') {
+			return 0;
+		}
+	}
+	return 0;
 }
 
 // enter_function submit the value 1 to advice 
@@ -51,12 +51,12 @@ int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
 	struct syscall_data data = {};
 
 	char comm[16];
-    bpf_get_current_comm(&comm, sizeof(comm));
-    // skip if the command is not the one we want to trace
-    if (__bpf_strncmp(comm, "$CMD", sizeof(comm)) != 0) {
-        bpf_trace_printk("command doesn't match: %s\\n", comm);
-        return 1;
-    }
+	bpf_get_current_comm(&comm, sizeof(comm));
+	// skip if the command is not the one we want to trace
+	if (__bpf_strncmp(comm, "$CMD", sizeof(comm)) != 0) {
+		bpf_trace_printk("command doesn't match: %s\\n", comm);
+		return 1;
+	}
 
 	int id = (int)args->id;
 	data.id = id;

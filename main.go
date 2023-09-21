@@ -4,14 +4,14 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/binary"
-    "flag"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"strings"
-    "path/filepath"
+	"path/filepath"
 
 	"github.com/iovisor/gobpf/bcc"
 	seccomp "github.com/seccomp/libseccomp-golang"
@@ -29,39 +29,39 @@ var eBPFCode string
 
 func main() {
 
-    functionName := flag.String("f", "", "Name of the function to trace (mandatory)")
-    outputFile := flag.String("o", "", "Name of the output file")
-    flag.Parse()
+	functionName := flag.String("f", "", "Name of the function to trace (mandatory)")
+	outputFile := flag.String("o", "", "Name of the output file")
+	flag.Parse()
 
-    // Check if the -f flag is provided and has a value
-    if *functionName == "" {
-        fmt.Println("Error: -f flag is mandatory. Please provide the name of the function to trace.")
-        flag.PrintDefaults()
-        os.Exit(1)
-    }
+	// Check if the -f flag is provided and has a value
+	if *functionName == "" {
+		fmt.Println("Error: -f flag is mandatory. Please provide the name of the function to trace.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
-    if *outputFile != "" {
-        // Redirect standard output to the specified file
-        outFile, err := os.Create(*outputFile)
-        if err != nil {
-            fmt.Printf("Error creating output file: %v\n", err)
-            flag.PrintDefaults()
-            os.Exit(1)
-        }
-        defer outFile.Close()
-        os.Stdout = outFile
-    }
+	if *outputFile != "" {
+		// Redirect standard output to the specified file
+		outFile, err := os.Create(*outputFile)
+		if err != nil {
+			fmt.Printf("Error creating output file: %v\n", err)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+		defer outFile.Close()
+		os.Stdout = outFile
+	}
 
-    // Get the remaining arguments as the command to execute
-    command := flag.Args()
-    // Check if there are any arguments after the -f flag
-    if len(command) == 0 {
-        fmt.Println("Error: Command to execute is mandatory. Please provide the command.")
-        flag.PrintDefaults()
-        os.Exit(1)
-    }
-    
-    src := strings.Replace(eBPFCode, "$CMD", filepath.Base(command[0]), -1)
+	// Get the remaining arguments as the command to execute
+	command := flag.Args()
+	// Check if there are any arguments after the -f flag
+	if len(command) == 0 {
+		fmt.Println("Error: Command to execute is mandatory. Please provide the command.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	
+	src := strings.Replace(eBPFCode, "$CMD", filepath.Base(command[0]), -1)
 	bpfModule := bcc.NewModule(src, []string{})
 	defer bpfModule.Close()
 
@@ -101,7 +101,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-    // run command that we want to trace
+	// run command that we want to trace
 	go func() {
 		cmd := exec.Command(command[0], command[1:]...)
 		cmd.Run()
@@ -119,14 +119,14 @@ func main() {
 			}
 			switch e.TracingStatus {
 			case 1:
-                if *outputFile == "" {
-				    fmt.Println("[+] start tracing")
-                }
+				if *outputFile == "" {
+					fmt.Println("[+] start tracing")
+				}
 			case 2:
-                if *outputFile == "" {
-				    fmt.Println("[+] stop tracing")
-				    fmt.Println("[ syscall list ]")
-                }
+				if *outputFile == "" {
+					fmt.Println("[+] stop tracing")
+					fmt.Println("[ syscall list ]")
+				}
 				printSyscalls(syscalls)
 				p, _ := os.FindProcess(os.Getpid())
 				p.Signal(os.Interrupt)
