@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"encoding/binary"
 	"flag"
 	"fmt"
@@ -24,8 +24,8 @@ type event struct {
 	TracingStatus uint32
 }
 
-//go:embed ebpf.c.txt
-var eBPFCode string
+//go:embed ebpf/*
+var eBPFDir embed.FS
 
 func main() {
 
@@ -61,7 +61,8 @@ func main() {
 		os.Exit(1)
 	}
 	
-	src := strings.Replace(eBPFCode, "$CMD", filepath.Base(command[0]), -1)
+	source, _ := eBPFDir.ReadFile("ebpf/ebpf.c")
+	src := strings.Replace(string(source), "$CMD", filepath.Base(command[0]), -1)
 	bpfModule := bcc.NewModule(src, []string{})
 	defer bpfModule.Close()
 
