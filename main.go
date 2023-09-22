@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"os/user"
 	"strings"
 	"path/filepath"
 
@@ -32,6 +33,11 @@ func main() {
 	functionName := flag.String("f", "", "Name of the function to trace (mandatory)")
 	outputFile := flag.String("o", "", "Name of the output file")
 	flag.Parse()
+
+	if ! isRunningAsRoot() {
+		fmt.Println("Not enough privileges to run the program")
+		os.Exit(1)
+	}
 
 	// Check if the -f flag is provided and has a value
 	if *functionName == "" {
@@ -150,4 +156,14 @@ func printSyscalls(syscalls map[uint32]int) {
 		}
 		fmt.Println(syscall)
 	}
+}
+
+func isRunningAsRoot() bool {
+	currentUser, err := user.Current()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+
+	return currentUser.Uid == "0"
 }
