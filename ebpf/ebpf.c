@@ -54,7 +54,7 @@ int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
 	bpf_get_current_comm(&comm, sizeof(comm));
 	// skip if the command is not the one we want to trace
 	if (__bpf_strncmp(comm, "$CMD", sizeof(comm)) != 0) {
-		bpf_trace_printk("command doesn't match: %s\\n", comm);
+		bpf_trace_printk("command doesn't match: %s\n", comm);
 		return 1;
 	}
 

@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +32,13 @@ var eBPFDir embed.FS
 func main() {
 
 	functionName := flag.String("f", "", "Name of the function to trace (mandatory)")
-	outputFile := flag.String("o", "", "Name of the output file")
+	// define usage
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "\nUsage: %s [options] [command]\n", path.Base(os.Args[0]))
+		fmt.Printf("\nOptions:")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
 
 	if !isRunningAsRoot() {
@@ -42,20 +49,7 @@ func main() {
 	// Check if the -f flag is provided and has a value
 	if *functionName == "" {
 		fmt.Println("Error: -f flag is mandatory. Please provide the name of the function to trace.")
-		flag.PrintDefaults()
 		os.Exit(1)
-	}
-
-	if *outputFile != "" {
-		// Redirect standard output to the specified file
-		outFile, err := os.Create(*outputFile)
-		if err != nil {
-			fmt.Printf("Error creating output file: %v\n", err)
-			flag.PrintDefaults()
-			os.Exit(1)
-		}
-		defer outFile.Close()
-		os.Stdout = outFile
 	}
 
 	// Get the remaining arguments as the command to execute
@@ -63,7 +57,6 @@ func main() {
 	// Check if there are any arguments after the -f flag
 	if len(command) == 0 {
 		fmt.Println("Error: Command to execute is mandatory. Please provide the command.")
-		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
@@ -116,7 +109,8 @@ func main() {
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	}()
 
-	syscalls := make(map[uint32]int)
+	var syscalls []uint32
+	executionStarted := false
 	go func() {
 		for data := range channel {
 			var e event
@@ -126,20 +120,18 @@ func main() {
 			}
 			switch e.TracingStatus {
 			case 1:
-				if *outputFile == "" {
-					fmt.Println("[+] start tracing")
-				}
+				fmt.Fprintln(os.Stderr, "[+] start tracing")
+				executionStarted = true
 			case 2:
-				if *outputFile == "" {
-					fmt.Println("[+] stop tracing")
-				}
+				fmt.Fprintln(os.Stderr, "[+] stop tracing")
+				executionStarted = false
 				printSyscalls(syscalls)
 				p, _ := os.FindProcess(os.Getpid())
 				p.Signal(os.Interrupt)
 			default:
-				syscall, _ := seccomp.ScmpSyscall(e.SyscallID).GetName()
-				fmt.Println(syscall)
-				syscalls[e.SyscallID]++
+				if executionStarted {
+					syscalls = append(syscalls, e.SyscallID)
+				}
 			}
 		}
 	}()
@@ -149,8 +141,8 @@ func main() {
 	perfMap.Stop()
 }
 
-func printSyscalls(syscalls map[uint32]int) {
-	for s := range syscalls {
+func printSyscalls(syscalls []uint32) {
+	for _, s := range syscalls {
 		syscall, err := seccomp.ScmpSyscall(s).GetName()
 		if err != nil {
 			fmt.Printf("error: %v", err)
