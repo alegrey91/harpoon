@@ -11,8 +11,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
-	"strings"
 	"path/filepath"
+	"strings"
 
 	"github.com/iovisor/gobpf/bcc"
 	seccomp "github.com/seccomp/libseccomp-golang"
@@ -34,7 +34,7 @@ func main() {
 	outputFile := flag.String("o", "", "Name of the output file")
 	flag.Parse()
 
-	if ! isRunningAsRoot() {
+	if !isRunningAsRoot() {
 		fmt.Println("Not enough privileges to run the program")
 		os.Exit(1)
 	}
@@ -66,7 +66,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	
+
 	source, _ := eBPFDir.ReadFile("ebpf/ebpf.c")
 	src := strings.Replace(string(source), "$CMD", filepath.Base(command[0]), -1)
 	bpfModule := bcc.NewModule(src, []string{})
@@ -132,12 +132,13 @@ func main() {
 			case 2:
 				if *outputFile == "" {
 					fmt.Println("[+] stop tracing")
-					fmt.Println("[ syscall list ]")
 				}
 				printSyscalls(syscalls)
 				p, _ := os.FindProcess(os.Getpid())
 				p.Signal(os.Interrupt)
 			default:
+				syscall, _ := seccomp.ScmpSyscall(e.SyscallID).GetName()
+				fmt.Println(syscall)
 				syscalls[e.SyscallID]++
 			}
 		}
@@ -158,6 +159,8 @@ func printSyscalls(syscalls map[uint32]int) {
 	}
 }
 
+// isRunningAsRoot check if the program is executed as root.
+// Returns true in case we are running it as root, else otherwise.
 func isRunningAsRoot() bool {
 	currentUser, err := user.Current()
 	if err != nil {
