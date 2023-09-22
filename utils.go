@@ -28,6 +28,5 @@ func isRunningAsRoot() bool {
 		fmt.Println("Error:", err)
 		return false
 	}
-
 	return currentUser.Uid == "0"
 }

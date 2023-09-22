@@ -6,7 +6,7 @@ build: create-bin-dir
 	go build \
 		-v \
 		-o ${BINARY_DIR}/${BINARY_NAME} \
-		main.go
+		.
 
 create-bin-dir:
 	mkdir -p ${BINARY_DIR}
