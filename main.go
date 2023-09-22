@@ -10,13 +10,11 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"os/user"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/iovisor/gobpf/bcc"
-	seccomp "github.com/seccomp/libseccomp-golang"
 )
 
 type event struct {
@@ -139,26 +137,4 @@ func main() {
 	perfMap.Start()
 	<-c
 	perfMap.Stop()
-}
-
-func printSyscalls(syscalls []uint32) {
-	for _, s := range syscalls {
-		syscall, err := seccomp.ScmpSyscall(s).GetName()
-		if err != nil {
-			fmt.Printf("error: %v", err)
-		}
-		fmt.Println(syscall)
-	}
-}
-
-// isRunningAsRoot check if the program is executed as root.
-// Returns true in case we are running it as root, else otherwise.
-func isRunningAsRoot() bool {
-	currentUser, err := user.Current()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return false
-	}
-
-	return currentUser.Uid == "0"
 }
