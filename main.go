@@ -26,6 +26,7 @@ type event struct {
 
 //go:embed ebpf/*
 var eBPFDir embed.FS
+var version string
 
 func main() {
 
@@ -35,6 +36,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\nUsage: %s [options] [command]\n", path.Base(os.Args[0]))
 		fmt.Printf("\nOptions:")
 		flag.PrintDefaults()
+		fmt.Printf("\nversion: %s\n", version)
 	}
 
 	flag.Parse()

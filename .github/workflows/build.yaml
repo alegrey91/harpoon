@@ -1,0 +1,35 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.20
+
+      - name: Install BCC Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y bpfcc-tools libbpfcc-dev  # Install BCC dependencies
+          sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
+
+      - name: Build and Test
+        run: |
+          make build-gh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: harpoon
+          path: bin/harpoon
