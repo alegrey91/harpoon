@@ -29,7 +29,6 @@ Then, let's run `harpoon` to extract the syscalls from the function `main.doSome
 harpoon -f main.doSomething ./binary
 [+] start tracing
 [+] stop tracing
-[ syscall list ]
 read
 sigaltstack
 gettid
