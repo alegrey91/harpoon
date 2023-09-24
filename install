@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -e
+
+BINARY_NAME="harpoon"
+BINARY_RELEASE_NAME="${BINARY_NAME}"
+
+cd /tmp
+
+# download binary + checksum file
+curl -s https://api.github.com/repos/alegrey91/harpoon/releases/latest | \
+    grep "browser_download_url" | \
+    cut -d : -f 2,3 | \
+    tr -d \" | \
+    wget -q -i -
+
+# check if binary has been downloaded, otherwise exit
+if [ ! -f "$BINARY_RELEASE_NAME" ]; then
+    echo "$BINARY_RELEASE_NAME doesn't exists."
+    exit 1
+fi
+printf "[download succeded]\n"
+
+# install binary
+chmod +x "$BINARY_RELEASE_NAME"
+mv "$BINARY_RELEASE_NAME" "/usr/local/bin/$BINARY_NAME"
+printf "[installation succeded]\n"

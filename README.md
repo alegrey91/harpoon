@@ -60,7 +60,11 @@ After the build is completed, you can find the executable under the `bin/` direc
 
 ### Download
 
-Alternatively, you can easily download the latest release from the dedicated [page](https://github.com/alegrey91/harpoon/releases/latest).
+Alternatively, you can easily download the latest release using the one liner:
+
+```sh
+curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
+```
 
 ## References
 
