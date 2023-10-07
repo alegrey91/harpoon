@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run as root",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "asRoot": true,
+            "console": "integratedTerminal",
+            "args": ["-fn", "<fuctionName>", "-co", "</path/to/command>"]
+        }
+    ]
+}
