@@ -66,6 +66,10 @@ Alternatively, you can easily download the latest release using the one liner:
 curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
 ```
 
+## Debugging
+
+In case you want to run the application locally, I've provided the [`.vscode/launch.json`](.vscode/launch.json) file to easily debug the application with `root` privileges in `vscode`. Just replace the parameters marked with `<>`.
+
 ## References
 
 I would like to point out that without the references mentioned below this project would never have come to life.
