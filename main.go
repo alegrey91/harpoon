@@ -32,10 +32,11 @@ func main() {
 
 	functionName := flag.String("fn", "", "Name of the function to trace (mandatory)")
 	outputFile := flag.String("o", "", "Output file to store the result")
+	commandOutput := flag.Bool("co", false, "Print command output")
 	// define usage
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "\nUsage: %s [options] [command]\n", path.Base(os.Args[0]))
-		fmt.Printf("\nOptions:")
+		fmt.Printf("\nOptions:\n")
 		flag.PrintDefaults()
 		fmt.Printf("\nversion: %s\n", version)
 	}
@@ -105,7 +106,10 @@ func main() {
 	// run command that we want to trace
 	go func() {
 		cmd := exec.Command(command[0], command[1:]...)
-		cmd.Run()
+		outErr, _ := cmd.CombinedOutput()
+		if *commandOutput {
+			fmt.Printf("%s\n", outErr)
+		}
 		defer cmd.Wait()
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	}()
