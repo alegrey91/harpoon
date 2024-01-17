@@ -14,7 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	//"github.com/iovisor/gobpf/bcc"
 	"github.com/iovisor/gobpf/bcc"
+	ebpflib "github.com/iovisor/gobpf/elf"
 )
 
 type event struct {
@@ -22,6 +24,10 @@ type event struct {
 	SyscallID uint32
 	// Stops tracing syscalls if true
 	TracingStatus uint32
+}
+
+type command struct {
+	name string
 }
 
 //go:embed ebpf/*
@@ -64,31 +70,30 @@ func main() {
 
 	source, _ := eBPFDir.ReadFile("ebpf/ebpf.c")
 	src := strings.Replace(string(source), "$CMD", filepath.Base(command[0]), -1)
-	bpfModule := bcc.NewModule(src, []string{})
-	defer bpfModule.Close()
+	ebpfModule := ebpflib.NewModule(src)
+	defer ebpfModule.Close()
 
-	uprobeFd, err := bpfModule.LoadUprobe("enter_function")
-	if err != nil {
-		log.Fatal(err)
-	}
-	uretprobeFd, err := bpfModule.LoadUprobe("exit_function")
-	if err != nil {
-		log.Fatal(err)
-	}
-	startTrace, err := bpfModule.LoadTracepoint("start_trace")
+	err := ebpfModule.Load(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = bpfModule.AttachUprobe(command[0], *functionName, uprobeFd, -1)
+	functionOffset, err := getFunctionOffset("ebpf/ebpf.o", *functionName)
+	err = ebpflib.AttachUprobe(ebpfModule.Uprobe("uprobe/enter_function"), command[0], functionOffset)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = bpfModule.AttachUretprobe(command[0], *functionName, uretprobeFd, -1)
-	if err != nil {
-		log.Fatal(err)
+
+	// for each RET instruction, attach an "exit_function" uprobe
+	functionRetOffsets, err := getFunctionRetOffsets("ebpf/ebpf.o", *functionName)
+	for _, ret := range functionRetOffsets {
+		err = ebpflib.AttachUprobe(ebpfModule.Uprobe("uprobe/exit_function"), command[0], ret)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	if err := bpfModule.AttachTracepoint("raw_syscalls:sys_enter", startTrace); err != nil {
+
+	if err := ebpfModule.EnableTracepoint("tracepoint/raw_syscalls/sys_enter"); err != nil {
 		log.Fatal(err)
 	}
 

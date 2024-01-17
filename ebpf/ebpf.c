@@ -1,8 +1,11 @@
 #include <uapi/linux/ptrace.h>
 #include <linux/string.h>
 #include <linux/tracepoint.h>
+#include "include/bpf_helpers.h"
 
 BPF_PERF_OUTPUT(events);
+
+BPF_PERF_OUTPUT(command);
 
 // data_t used to store the data received from the event
 struct syscall_data {
@@ -12,7 +15,12 @@ struct syscall_data {
 	u32 tracingStatus;
 };
 
-// imlement strncmp function
+struct command {
+	// the syscall number
+	char name[25];
+};
+
+// implement strncmp function
 // https://sysdig.com/blog/ebpf-offensive-capabilities/
 static __always_inline __u64
 __bpf_strncmp(const void *x, const void *y, __u64 len) {
@@ -30,6 +38,7 @@ __bpf_strncmp(const void *x, const void *y, __u64 len) {
 // enter_function submit the value 1 to advice 
 // the frontend app that the function started its
 // execution
+SEC("uprobe/enter_function")
 inline int enter_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 1;
@@ -40,6 +49,7 @@ inline int enter_function(struct pt_regs *ctx) {
 // exit_function submit the value 2 to advice 
 // the frontend app that the function finished its
 // execution
+SEC("uprobe/exit_function")
 inline int exit_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 2;
@@ -47,13 +57,15 @@ inline int exit_function(struct pt_regs *ctx) {
 	return 0;
 }
 
+SEC("tracepoint/start_trace")
 int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
 	struct syscall_data data = {};
 
 	char comm[16];
 	bpf_get_current_comm(&comm, sizeof(comm));
 	// skip if the command is not the one we want to trace
-	if (__bpf_strncmp(comm, "$CMD", sizeof(comm)) != 0) {
+	command = bpf_map_lookup_element()
+	if (__bpf_strncmp(comm, , sizeof(comm)) != 0) {
 		//bpf_trace_printk("command doesn't match: %s\n", comm);
 		return 1;
 	}
