@@ -1,15 +1,31 @@
-#include <uapi/linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/tracepoint.h>
+//go:build ignore
 
-BPF_PERF_OUTPUT(events);
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include <linux/string.h>
+#include <bpf/bpf_tracing.h>
+
+//BPF_PERF_OUTPUT(events);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+} events SEC(".maps");
 
 // data_t used to store the data received from the event
 struct syscall_data {
 	// the syscall number
-	u32 syscall_id;
+	__u32 syscall_id;
 	// tracing status (1 start, 2 stop)
-	u32 tracingStatus;
+	__u32 tracingStatus;
+};
+
+struct sys_enter_info {
+	unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    long id;
+    unsigned long args[6];
 };
 
 // imlement strncmp function
@@ -30,24 +46,27 @@ __bpf_strncmp(const void *x, const void *y, __u64 len) {
 // enter_function submit the value 1 to advice 
 // the frontend app that the function started its
 // execution
-inline int enter_function(struct pt_regs *ctx) {
+SEC("uprobe/enter_function")
+inline int uprobe_enter_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 1;
-	events.perf_submit(ctx, &data, sizeof(data));
+	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
 	return 0;
 }
 
 // exit_function submit the value 2 to advice 
 // the frontend app that the function finished its
 // execution
-inline int exit_function(struct pt_regs *ctx) {
+SEC("uprobe/exit_function")
+inline int uprobe_exit_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 2;
-	events.perf_submit(ctx, &data, sizeof(data));
+	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
 	return 0;
 }
 
-int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
+SEC("tp/raw_syscalls/sys_enter")
+int tracepoint_raw_sys_enter(struct sys_enter_info* ctx) {
 	struct syscall_data data = {};
 
 	char comm[16];
@@ -58,9 +77,10 @@ int start_trace(struct tracepoint__raw_syscalls__sys_enter* args) {
 		return 1;
 	}
 
-	int id = (int)args->id;
+	int id = (int)ctx->id;
 	data.syscall_id = id;
-	events.perf_submit(args, &data, sizeof(data));
+	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
 	return 0;
 }
 
+char __license[] SEC("license") = "Dual MIT/GPL";

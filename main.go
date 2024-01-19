@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"embed"
 	"encoding/binary"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -11,11 +11,14 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
-	"path/filepath"
-	"strings"
+	"syscall"
 
-	"github.com/iovisor/gobpf/bcc"
+	"github.com/cilium/ebpf/link"
+	"github.com/cilium/ebpf/perf"
+	"github.com/cilium/ebpf/rlimit"
 )
+
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go ebpf ebpf/ebpf.c -- -I../headers
 
 type event struct {
 	// syscall number
@@ -24,8 +27,6 @@ type event struct {
 	TracingStatus uint32
 }
 
-//go:embed ebpf/*
-var eBPFDir embed.FS
 var version = "test"
 
 func main() {
@@ -62,46 +63,55 @@ func main() {
 		os.Exit(1)
 	}
 
-	source, _ := eBPFDir.ReadFile("ebpf/ebpf.c")
-	src := strings.Replace(string(source), "$CMD", filepath.Base(command[0]), -1)
-	bpfModule := bcc.NewModule(src, []string{})
-	defer bpfModule.Close()
-
-	uprobeFd, err := bpfModule.LoadUprobe("enter_function")
-	if err != nil {
-		log.Fatal(err)
-	}
-	uretprobeFd, err := bpfModule.LoadUprobe("exit_function")
-	if err != nil {
-		log.Fatal(err)
-	}
-	startTrace, err := bpfModule.LoadTracepoint("start_trace")
-	if err != nil {
-		log.Fatal(err)
+	if err := rlimit.RemoveMemlock(); err != nil {
+		log.Fatal("Removing memlock:", err)
 	}
 
-	err = bpfModule.AttachUprobe(command[0], *functionName, uprobeFd, -1)
-	if err != nil {
-		log.Fatal(err)
+	objs := ebpfObjects{}
+	if err := loadEbpfObjects(&objs, nil); err != nil {
+		log.Fatalf("loading objects: %v", err)
 	}
-	err = bpfModule.AttachUretprobe(command[0], *functionName, uretprobeFd, -1)
+	defer objs.Close()
+
+	// Open an ELF binary and read its symbols.
+	ex, err := link.OpenExecutable(command[0])
 	if err != nil {
-		log.Fatal(err)
-	}
-	if err := bpfModule.AttachTracepoint("raw_syscalls:sys_enter", startTrace); err != nil {
-		log.Fatal(err)
+		log.Fatalf("opening executable: %s", err)
 	}
 
-	table := bcc.NewTable(bpfModule.TableId("events"), bpfModule)
-	channel := make(chan []byte)
-
-	perfMap, err := bcc.InitPerfMap(table, channel, nil)
+	// attach "uprobe/enter_function"
+	upEnter, err := ex.Uprobe(*functionName, objs.UprobeEnterFunction, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("creating uretprobe: %s", err)
+	}
+	defer upEnter.Close()
+
+	// for each RET instruction, attach a "uprobe/exit_function"
+	functionRetOffsets, err := getFunctionRetOffsets(command[0], *functionName)
+	for _, retOffset := range functionRetOffsets {
+		upExit, err := ex.Uprobe(*functionName, objs.UprobeEnterFunction, &link.UprobeOptions{
+			Offset: retOffset,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer upExit.Close()
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	// attach "tracepoint/raw_syscalls/sys_enter"
+	tpSysEnter, err := link.Tracepoint("raw_syscalls", "sys_enter", objs.TracepointRawSysEnter, nil)
+	if err != nil {
+		log.Fatalf("opening tracepoint: %s", err)
+	}
+	defer tpSysEnter.Close()
+
+	// open a perf event reader from userspace on the PERF_EVENT_ARRAY map
+	// described in the eBPF C program.
+	rd, err := perf.NewReader(objs.Events, os.Getpagesize())
+	if err != nil {
+		log.Fatalf("creating perf event reader: %s", err)
+	}
+	defer rd.Close()
 
 	// run command that we want to trace
 	go func() {
@@ -114,44 +124,65 @@ func main() {
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	}()
 
-	var syscalls []uint32
-	executionStarted := false
+	stopper := make(chan os.Signal, 1)
+	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
+
 	go func() {
-		for data := range channel {
-			var e event
-			if err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e); err != nil {
-				fmt.Printf("failed to decode received data %q: %s\n", data, err)
-				return
-			}
-			switch e.TracingStatus {
-			case 1:
-				fmt.Fprintln(os.Stdout, "[+] start tracing")
-				executionStarted = true
-			case 2:
-				fmt.Fprintln(os.Stdout, "[+] stop tracing")
-				executionStarted = false
+		// wait for a signal and close the perf reader,
+		// which will interrupt rd.Read() and make the program exit.
+		<-stopper
+		log.Println("Received signal, exiting program..")
 
-				// write to file or stdout depending on the flags passed
-				if *outputFile != "" {
-					file, _ := createFile(outputFile)
-					defer file.Close()
-					printSyscalls(file, syscalls)
-				} else {
-					printSyscalls(os.Stdout, syscalls)
-				}
-
-				// send an interrupt to gracefuly shutdown the program
-				p, _ := os.FindProcess(os.Getpid())
-				p.Signal(os.Interrupt)
-			default:
-				if executionStarted {
-					syscalls = append(syscalls, e.SyscallID)
-				}
-			}
+		if err := rd.Close(); err != nil {
+			log.Fatalf("closing perf event reader: %s", err)
 		}
 	}()
 
-	perfMap.Start()
-	<-c
-	perfMap.Stop()
+	var syscalls []uint32
+	executionStarted := false
+
+	var e event
+	for {
+		record, err := rd.Read()
+		if err != nil {
+			if errors.Is(err, perf.ErrClosed) {
+				return
+			}
+			log.Printf("reading from perf event reader: %s", err)
+			continue
+		}
+		if record.LostSamples != 0 {
+			log.Printf("perf event ring buffer full, dropped %d samples", record.LostSamples)
+			continue
+		}
+		if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &e); err != nil {
+			log.Printf("failed to decode received data %q: %s\n", record, err)
+			continue
+		}
+		switch e.TracingStatus {
+		case 1:
+			fmt.Fprintln(os.Stdout, "[+] start tracing")
+			executionStarted = true
+		case 2:
+			fmt.Fprintln(os.Stdout, "[+] stop tracing")
+			executionStarted = false
+
+			// write to file or stdout depending on the flags passed
+			if *outputFile != "" {
+				file, _ := createFile(outputFile)
+				defer file.Close()
+				printSyscalls(file, syscalls)
+			} else {
+				printSyscalls(os.Stdout, syscalls)
+			}
+
+			// send an interrupt to gracefuly shutdown the program
+			p, _ := os.FindProcess(os.Getpid())
+			p.Signal(os.Interrupt)
+		default:
+			if executionStarted {
+				syscalls = append(syscalls, e.SyscallID)
+			}
+		}
+	}
 }
