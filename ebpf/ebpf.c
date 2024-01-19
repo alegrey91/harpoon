@@ -10,6 +10,8 @@ struct {
 	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
 } events SEC(".maps");
 
+BPF_HASH(command, u32);
+
 // data_t used to store the data received from the event
 struct syscall_data {
 	// the syscall number
@@ -47,7 +49,7 @@ __bpf_strncmp(const void *x, const void *y, __u64 len) {
 // the frontend app that the function started its
 // execution
 SEC("uprobe/enter_function")
-inline int uprobe_enter_function(struct pt_regs *ctx) {
+int uprobe_enter_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 1;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
@@ -58,7 +60,7 @@ inline int uprobe_enter_function(struct pt_regs *ctx) {
 // the frontend app that the function finished its
 // execution
 SEC("uprobe/exit_function")
-inline int uprobe_exit_function(struct pt_regs *ctx) {
+int uprobe_exit_function(struct pt_regs *ctx) {
 	struct syscall_data data = {};
 	data.tracingStatus = 2;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
@@ -68,12 +70,15 @@ inline int uprobe_exit_function(struct pt_regs *ctx) {
 SEC("tp/raw_syscalls/sys_enter")
 int tracepoint_raw_sys_enter(struct sys_enter_info* ctx) {
 	struct syscall_data data = {};
+	// read argument set from Go code
+	u32 key = 0;
+    int *arg = args.lookup(&key);
 
 	char comm[16];
 	bpf_get_current_comm(&comm, sizeof(comm));
 	// skip if the command is not the one we want to trace
-	if (__bpf_strncmp(comm, "$CMD", sizeof(comm)) != 0) {
-		//bpf_trace_printk("command doesn't match: %s\n", comm);
+	if (__bpf_strncmp(comm, "randomic.test", sizeof(comm)) != 0) {
+		//bpf_printk("command doesn't match: %s\n", comm);
 		return 1;
 	}
 

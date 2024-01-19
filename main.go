@@ -87,15 +87,22 @@ func main() {
 	defer upEnter.Close()
 
 	// for each RET instruction, attach a "uprobe/exit_function"
+	upExitList := make([]link.Link, 0)
 	functionRetOffsets, err := getFunctionRetOffsets(command[0], *functionName)
 	for _, retOffset := range functionRetOffsets {
 		upExit, err := ex.Uprobe(*functionName, objs.UprobeEnterFunction, &link.UprobeOptions{
 			Offset: retOffset,
 		})
+		upExitList = append(upExitList, upExit)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer upExit.Close()
+		defer func() {
+			for _, up := range upExitList {
+				up.Close()
+			}
+			return
+		}()
 	}
 
 	// attach "tracepoint/raw_syscalls/sys_enter"
