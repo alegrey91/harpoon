@@ -1,15 +1,24 @@
 BINARY_NAME=harpoon
 BINARY_DIR=./bin
+OUTPUT_DIR=./output
+
+build-static-libbpfgo:
+	git clone https://github.com/aquasecurity/libbpfgo.git && \
+	cd libbpfgo/ && \
+	make libbpfgo-static
 
 vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > ebpf/vmlinux.h
 
-build-bpf:
-	clang -g -O2 -c -target bpf -o ebpf.o ebpf/ebpf.c
+build-bpf: create-output-dir
+	clang -g -O2 -c -target bpf -o ${OUTPUT_DIR}/ebpf.o ebpf/ebpf.c
 
-build: create-bin-dir vmlinux.h build-bpf
+build: create-bin-dir vmlinux.h build-static-libbpfgo build-bpf
 	go mod download
-	CC=gcc CGO_CFLAGS="-I /usr/include/bpf" CGO_LDFLAGS="-lelf -lz /usr/lib64/libbpf.a" \
+	export CURRENT_DIR=$(shell pwd); \
+	CC=gcc \
+	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
@@ -21,7 +30,10 @@ ifndef GITHUB_REF_NAME
 	$(error GITHUB_REF_NAME is undefined)
 endif
 	go mod download
-	CC=gcc CGO_CFLAGS="-I /usr/include/bpf" CGO_LDFLAGS="-lelf -lz /usr/lib64/libbpf.a" \
+	export CURRENT_DIR=$(shell pwd); \
+	CC=gcc \
+	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
@@ -32,5 +44,10 @@ endif
 create-bin-dir:
 	mkdir -p ${BINARY_DIR}
 
+create-output-dir:
+	mkdir -p ${OUTPUT_DIR}
+
 clean:
-	rm -rf ./bin
+	rm -rf ${OUTPUT_DIR}
+	rm -rf ${BINARY_DIR}
+	rm -rf ./libbpfgo
