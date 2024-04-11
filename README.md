@@ -25,10 +25,8 @@ So, `main.doSomething` is the symbol of the function we want to trace using `har
 
 Then, let's run `harpoon` to extract the syscalls from the function `main.doSomething`:
 
-```sh
-harpoon -fn main.doSomething ./binary
-[+] start tracing
-[+] stop tracing
+```shell
+sudo harpoon -fn main.doSomething ./binary
 read
 sigaltstack
 gettid
@@ -45,8 +43,6 @@ getrlimit
 These are the syscalls that have been executed by the traced function!
 
 ## Installation
-
-`harpoon` uses the [**bcc**](https://github.com/iovisor/bcc/blob/master/) project under the hood to run **eBPF**. In order to make it works, you'll have to install the **bcc** *build dependencies*, since it compiles **eBPF** code at runtime. To do so, please refer to this [page](https://github.com/iovisor/bcc/blob/master/INSTALL.md) looking at your own distribution.
 
 ### Build
 
@@ -69,6 +65,11 @@ curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo 
 ## Debugging
 
 In case you want to run the application locally, I've provided the [`.vscode/launch.json`](.vscode/launch.json) file to easily debug the application with `root` privileges in `vscode`. Just replace the parameters marked with `<>`.
+
+## Talks
+
+I had the pleasure of presenting `harpoon` at the following conferences:
+* [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/)
 
 ## References
 
