@@ -25,7 +25,7 @@ build: create-bin-dir vmlinux.h build-static-libbpfgo build-bpf
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
-build-gh: create-bin-dir vmlinux.h build-bpf
+build-gh: create-bin-dir vmlinux.h build-static-libbpfgo build-bpf
 ifndef GITHUB_REF_NAME
 	$(error GITHUB_REF_NAME is undefined)
 endif
