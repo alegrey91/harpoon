@@ -18,7 +18,7 @@ jobs:
       - name: Install BCC Dependencies
         run: |
           sudo apt update
-          sudo apt install -y bpfcc-tools libbpfcc-dev  # Install BCC dependencies
+          sudo apt install -y libbpf-dev                # Install libbpf dependencies
           sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
       - name: Build and Test
         run: |-
