@@ -26,7 +26,7 @@ So, `main.doSomething` is the symbol of the function we want to trace using `har
 Then, let's run `harpoon` to extract the syscalls from the function `main.doSomething`:
 
 ```shell
-sudo harpoon -fn main.doSomething ./binary
+harpoon -fn main.doSomething ./binary
 read
 sigaltstack
 gettid
