@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"unsafe"
 
-	"github.com/aquasecurity/libbpfgo"
 	bpf "github.com/aquasecurity/libbpfgo"
 	"github.com/aquasecurity/libbpfgo/helpers"
 )
@@ -64,7 +63,7 @@ func main() {
 	}
 
 	// suppress libbpf log ouput
-	libbpfgo.SetLoggerCbs(
+	bpf.SetLoggerCbs(
 		bpf.Callbacks{
 			Log: func(level int, msg string) {
 				return
