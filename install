@@ -23,7 +23,5 @@ printf "[download succeded]\n"
 
 # install binary
 chmod +x "$BINARY_RELEASE_NAME"
-setcap cap_bpf=ep "$BINARY_RELEASE_NAME"
-setcap cap_tracing=ep "$BINARY_RELEASE_NAME"
 mv "$BINARY_RELEASE_NAME" "/usr/local/bin/$BINARY_NAME"
 printf "[installation succeded]\n"
