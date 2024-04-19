@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
 	"path/filepath"
+	"sync"
 	"unsafe"
 
 	bpf "github.com/aquasecurity/libbpfgo"
@@ -18,8 +18,7 @@ import (
 )
 
 type event struct {
-	SyscallID     uint32
-	TracingStatus uint32
+	SyscallID uint32
 }
 
 //go:embed output/*
@@ -58,7 +57,7 @@ func main() {
 	command := flag.Args()
 	// Check if there are any arguments after the -f flag
 	if len(command) == 0 {
-		fmt.Println("command argument is mandatory.")
+		fmt.Println("command argument is mandatory")
 		os.Exit(1)
 	}
 
@@ -102,9 +101,9 @@ func main() {
 		os.Exit(-1)
 	}
 
-	traceFunction, err := bpfModule.GetProgram("start_trace")
+	traceFunction, err := bpfModule.GetProgram("trace_syscall")
 	if err != nil {
-		fmt.Printf("error loading program 'start_trace': %v\n", err)
+		fmt.Printf("error loading program 'trace_syscall': %v\n", err)
 		os.Exit(-1)
 	}
 
@@ -115,7 +114,7 @@ func main() {
 	}
 	enterLink, err := enterFuncProbe.AttachUprobe(-1, command[0], offset)
 	if err != nil {
-		fmt.Printf("error attaching uprobe at function: %s, offset: %d\n", *functionName, offset)
+		fmt.Printf("error attaching uprobe at function: %s / offset: %d, error: %v\n", *functionName, offset, err)
 		os.Exit(-1)
 	}
 	defer enterLink.Destroy()
@@ -131,7 +130,7 @@ func main() {
 		exitLink, err := exitFuncProbe.AttachUprobe(-1, command[0], offset+uint32(offsetRet))
 		exitLinks = append(exitLinks, exitLink)
 		if err != nil {
-			fmt.Printf("error attaching uprobe at function RET: %s, offset: %d", *functionName, offset+uint32(offsetRet))
+			fmt.Printf("error attaching uprobe at function RET: %s / offset: %d, error: %v\n", *functionName, offset+uint32(offsetRet), err)
 			os.Exit(-1)
 		}
 		defer func() {
@@ -144,7 +143,7 @@ func main() {
 
 	traceLink, err := traceFunction.AttachTracepoint(tracepointCategory, tracepointName)
 	if err != nil {
-		fmt.Printf("error attaching tracepoint at event: %s:%s", tracepointCategory, tracepointName)
+		fmt.Printf("error attaching tracepoint at event: %s:%s\n", tracepointCategory, tracepointName)
 		os.Exit(-1)
 	}
 	defer traceLink.Destroy()
@@ -158,7 +157,7 @@ func main() {
 	baseCmd := append([]byte(baseCommand), 0)
 	err = config.Update(unsafe.Pointer(&config_key_command), unsafe.Pointer(&baseCmd[0]))
 	if err != nil {
-		fmt.Printf("error updating config_map with values: %d - '%s', %v\n", config_key_command, baseCommand, err)
+		fmt.Printf("error updating config_map with values: %d / '%s', %v\n", config_key_command, baseCommand, err)
 		os.Exit(-1)
 	}
 
@@ -170,21 +169,22 @@ func main() {
 		os.Exit(-1)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
 	// run command that we want to trace
-	go func() {
+	var w sync.WaitGroup
+	w.Add(1)
+	go func(w *sync.WaitGroup) {
 		cmd := exec.Command(command[0], command[1:]...)
 		outErr, _ := cmd.CombinedOutput()
 		if *commandOutput {
 			fmt.Printf("%s\n", outErr)
 		}
-		defer cmd.Wait()
-	}()
+		defer func() {
+			cmd.Wait()
+			w.Done()
+		}()
+	}(&w)
 
 	var syscalls []uint32
-	executionIsStarted := false
 	go func() {
 		for data := range eventsChannel {
 			var e event
@@ -192,35 +192,22 @@ func main() {
 				fmt.Printf("failed to decode received data %q: %s\n", data, err)
 				return
 			}
-			switch e.TracingStatus {
-			case 1:
-				executionIsStarted = true
-			case 2:
-				executionIsStarted = false
-
-				// write to file or stdout depending on the flags passed
-				if *outputFile != "" {
-					file, _ := createFile(outputFile)
-					defer file.Close()
-					// write to file
-					printSyscalls(file, syscalls)
-				} else {
-					// write to stdout
-					printSyscalls(os.Stdout, syscalls)
-				}
-
-				// send an interrupt to gracefuly shutdown the program
-				p, _ := os.FindProcess(os.Getpid())
-				p.Signal(os.Interrupt)
-			default:
-				if executionIsStarted {
-					syscalls = append(syscalls, e.SyscallID)
-				}
-			}
+			syscalls = append(syscalls, e.SyscallID)
 		}
 	}()
 
 	rb.Poll(300)
-	<-c
+	// wait for command completion
+	w.Wait()
 	rb.Stop()
+
+	if *outputFile != "" {
+		file, _ := createFile(outputFile)
+		defer file.Close()
+		// write to file
+		printSyscalls(file, syscalls)
+	} else {
+		// write to stdout
+		printSyscalls(os.Stdout, syscalls)
+	}
 }
