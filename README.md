@@ -44,23 +44,25 @@ These are the syscalls that have been executed by the traced function!
 
 ## Installation
 
+To install `harpoon` you currently have 2 options:
+
+### Download
+
+You can easily download the latest release using the installation script:
+
+```sh
+curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
+```
+
 ### Build
 
-Once you have all the needed tools to run `harpoon`, you can build it locally with:
+Or you can build `harpoon` manually by using the following command:
 
 ```sh
 make build
 ```
 
 After the build is completed, you can find the executable under the `bin/` directory.
-
-### Download
-
-Alternatively, you can easily download the latest release using the one liner:
-
-```sh
-curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
-```
 
 ## Debugging
 
