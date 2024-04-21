@@ -188,18 +188,17 @@ func main() {
 
 	var syscalls []uint32
 	go func() {
-		//for data := range eventsChannel {
 		for {
 			select {
 			case data := <-eventsChannel:
 				var e event
 				if err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e); err != nil {
-					fmt.Printf("failed to decode received data %q: %s\n", data, err)
+					fmt.Fprintf(os.Stderr, "failed to decode received data %q: %s\n", data, err)
 					return
 				}
 				syscalls = append(syscalls, e.SyscallID)
 			case lost := <-lostChannel:
-				fmt.Printf("lost %d data", lost)
+				fmt.Fprintf(os.Stderr, "lost %d data", lost)
 			}
 		}
 	}()
