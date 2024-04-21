@@ -24,6 +24,8 @@ type event struct {
 //go:embed output/*
 var eBPFObject embed.FS
 var version = "test"
+var uprobeEnterFunc = "enter_function"
+var uprobeExitFunc = "exit_function"
 var tracepointCategory = "raw_syscalls"
 var tracepointName = "sys_enter"
 
@@ -89,15 +91,15 @@ func main() {
 	}
 
 	bpfModule.BPFLoadObject()
-	enterFuncProbe, err := bpfModule.GetProgram("enter_function")
+	enterFuncProbe, err := bpfModule.GetProgram(uprobeEnterFunc)
 	if err != nil {
-		fmt.Printf("error loading program 'enter_function': %v\n", err)
+		fmt.Printf("error loading program '%s': %v\n", uprobeEnterFunc, err)
 		os.Exit(-1)
 	}
 
-	exitFuncProbe, err := bpfModule.GetProgram("exit_function")
+	exitFuncProbe, err := bpfModule.GetProgram(uprobeExitFunc)
 	if err != nil {
-		fmt.Printf("error loading program 'exit_function': %v\n", err)
+		fmt.Printf("error loading program '%s': %v\n", uprobeExitFunc, err)
 		os.Exit(-1)
 	}
 
@@ -186,13 +188,19 @@ func main() {
 
 	var syscalls []uint32
 	go func() {
-		for data := range eventsChannel {
-			var e event
-			if err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e); err != nil {
-				fmt.Printf("failed to decode received data %q: %s\n", data, err)
-				return
+		//for data := range eventsChannel {
+		for {
+			select {
+			case data := <-eventsChannel:
+				var e event
+				if err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e); err != nil {
+					fmt.Printf("failed to decode received data %q: %s\n", data, err)
+					return
+				}
+				syscalls = append(syscalls, e.SyscallID)
+			case lost := <-lostChannel:
+				fmt.Printf("lost %d data", lost)
 			}
-			syscalls = append(syscalls, e.SyscallID)
 		}
 	}()
 

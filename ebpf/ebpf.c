@@ -83,7 +83,7 @@ int trace_syscall(struct trace_event_raw_sys_enter* args) {
 
 	tc = bpf_map_lookup_elem(&tracing_status, &key_map_trace);
 	if (!tc) {
-		bpf_printk("error getting tracing status\n");
+		bpf_printk("error getting tracing status");
 		return 1;
 	}
 	if (tc->status != 1) {
