@@ -14,7 +14,7 @@ This tool is designed to provide fine-grained visibility into the syscalls made 
 
 ## Getting Started
 
-First of all, identify the symbol of the function you want to trace from the binary. Let's suppose you want to trace the function `doSomething()` present in the example program `./binary`. In order to get the symbol from the binary itself, you need to use the following command:
+First of all, let's identify the symbol of the function you want to trace from the binary. Suppose you want to trace the function `doSomething()` present in the example program `./binary`. In order to get the symbol from the binary itself, you need to use the following command:
 
 ```sh
 objdump --syms ./binary | grep doSomething
@@ -26,7 +26,7 @@ So, `main.doSomething` is the symbol of the function we want to trace using `har
 Then, let's run `harpoon` to extract the syscalls from the function `main.doSomething`:
 
 ```shell
-harpoon -fn main.doSomething ./binary
+harpoon capture -f main.doSomething ./binary
 read
 sigaltstack
 gettid
