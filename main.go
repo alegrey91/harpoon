@@ -30,7 +30,6 @@ var tracepointCategory = "raw_syscalls"
 var tracepointName = "sys_enter"
 
 func main() {
-
 	functionName := flag.String("fn", "", "Name of the function to trace (mandatory)")
 	outputFile := flag.String("o", "", "Output file to store the result")
 	commandOutput := flag.Bool("co", false, "Print command output")
@@ -163,9 +162,10 @@ func main() {
 		os.Exit(-1)
 	}
 
+	// init perf buffer
 	eventsChannel := make(chan []byte)
 	lostChannel := make(chan uint64)
-	rb, err := bpfModule.InitPerfBuf("events", eventsChannel, lostChannel, 1024)
+	rb, err := bpfModule.InitPerfBuf("events", eventsChannel, lostChannel, 1)
 	if err != nil {
 		fmt.Println("error initializing PerfBuffer: %v\n", err)
 		os.Exit(-1)
@@ -192,13 +192,14 @@ func main() {
 			select {
 			case data := <-eventsChannel:
 				var e event
-				if err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e); err != nil {
-					fmt.Fprintf(os.Stderr, "failed to decode received data %q: %s\n", data, err)
+				err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e)
+				if err != nil {
 					return
 				}
 				syscalls = append(syscalls, e.SyscallID)
 			case lost := <-lostChannel:
-				fmt.Fprintf(os.Stderr, "lost %d data", lost)
+				fmt.Fprintf(os.Stderr, "lost %d data\n", lost)
+				return
 			}
 		}
 	}()
