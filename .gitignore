@@ -1,2 +1,3 @@
 bin/
-ebpf.o
+output/ebpf.o
+internal/embeddable/output/ebpf.o
