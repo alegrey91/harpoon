@@ -50,7 +50,7 @@ endif
 	go build \
 		-tags core,ebpf \
 		-v \
-		-ldflags="-s -w -X 'main.version=${GITHUB_REF_NAME}'" \
+		-ldflags="-s -w -X 'github.com/alegrey91/harpoon/cmd.Version=${GITHUB_REF_NAME}'" \
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 

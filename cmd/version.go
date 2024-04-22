@@ -21,14 +21,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "test"
+var Version = "test"
 
 // captureCmd represents the create args
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Version of the tool.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(version)
+		fmt.Println(Version)
 	},
 }
 
