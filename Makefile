@@ -12,6 +12,7 @@ vmlinux.h:
 
 build-bpf: create-output-dir
 	clang -g -O2 -c -target bpf -o ${OUTPUT_DIR}/ebpf.o ebpf/ebpf.c
+	cp ${OUTPUT_DIR}/ebpf.o ./internal/embeddable/output/
 
 build-go: create-bin-dir
 	go mod download
