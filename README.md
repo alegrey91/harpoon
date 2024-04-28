@@ -6,8 +6,6 @@
 
 **Harpoon** aims to capture the syscalls (as if they were fishes) from the execution flow (the river) of a single user-defined function.
 
-**N.B.** This is currently a PoC made for fun in my free time. Definitely, not a production grade project.
-
 ## Introduction
 
 This tool is designed to provide fine-grained visibility into the syscalls made by specific functions within a program. Unlike traditional system call tracing tools like `strace`, which capture all syscalls made during the entire program's execution, this project leverages the power of **eBPF** to pinpoint and monitor system calls exclusively within targeted functions.
@@ -70,8 +68,9 @@ In case you want to run the application locally, I've provided the [`.vscode/lau
 
 ## Talks
 
-I had the pleasure of presenting `harpoon` at the following conferences:
+I had the pleasure of speaking about `harpoon` at the following conferences:
 * [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/)
+* [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM)
 
 ## References
 
