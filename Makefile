@@ -11,7 +11,7 @@ vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > ebpf/vmlinux.h
 
 build-bpf: create-output-dir
-	clang -g -O2 -c -target bpf -o ${OUTPUT_DIR}/ebpf.o ebpf/ebpf.c
+	clang -g -O2 -c -target bpf -D__TARGET_ARCH_x86 -o ${OUTPUT_DIR}/ebpf.o ebpf/ebpf.c
 	cp ${OUTPUT_DIR}/ebpf.o ./internal/embeddable/output/
 
 build-go: create-bin-dir

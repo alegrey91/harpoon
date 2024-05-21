@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -39,7 +40,7 @@ type event struct {
 	SyscallID uint32
 }
 
-var functionName string
+var functionSymbols string
 var commandOutput bool
 var libbpfOutput bool
 var save bool
@@ -62,6 +63,8 @@ by passing the function name symbol and the binary args.
 `,
 	Example: "  harpoon -f main.doSomething ./command arg1 arg2 ...",
 	Run: func(cmd *cobra.Command, args []string) {
+		functionSymbolList := strings.Split(functionSymbols, ",")
+
 		if !libbpfOutput {
 			// suppress libbpf log ouput
 			bpf.SetLoggerCbs(
@@ -90,58 +93,52 @@ by passing the function name symbol and the binary args.
 			fmt.Printf("error retrieving map (%s) from BPF program: %v\n", bpfConfigMap, err)
 			os.Exit(-1)
 		}
-
-		bpfModule.BPFLoadObject()
 		enterFuncProbe, err := bpfModule.GetProgram(uprobeEnterFunc)
 		if err != nil {
 			fmt.Printf("error loading program (%s): %v\n", uprobeEnterFunc, err)
 			os.Exit(-1)
 		}
-
 		exitFuncProbe, err := bpfModule.GetProgram(uprobeExitFunc)
 		if err != nil {
 			fmt.Printf("error loading program (%s): %v\n", uprobeExitFunc, err)
 			os.Exit(-1)
 		}
-
 		traceFunction, err := bpfModule.GetProgram(tracepointFunc)
 		if err != nil {
 			fmt.Printf("error loading program (%s): %v\n", tracepointFunc, err)
 			os.Exit(-1)
 		}
 
-		offset, err := helpers.SymbolToOffset(args[0], functionName)
-		if err != nil {
-			fmt.Printf("error finding function (%s) offset: %v\n", functionName, err)
-			os.Exit(-1)
-		}
-		enterLink, err := enterFuncProbe.AttachUprobe(-1, args[0], offset)
-		if err != nil {
-			fmt.Printf("error attaching uprobe at function (%s) offset: %d, error: %v\n", functionName, offset, err)
-			os.Exit(-1)
-		}
-		defer enterLink.Destroy()
-
-		/*
-			Since the uretprobes doesn't work well with Go binaries,
-			we are going to attach a uprobe ∀ RET instruction withing the
-			traced function.
-		*/
-		exitLinks := make([]*bpf.BPFLink, 0)
-		functionRetOffsets, err := elfreader.GetFunctionRetOffsets(args[0], functionName)
-		for _, offsetRet := range functionRetOffsets {
-			exitLink, err := exitFuncProbe.AttachUprobe(-1, args[0], offset+uint32(offsetRet))
-			exitLinks = append(exitLinks, exitLink)
+		bpfModule.BPFLoadObject()
+		enterLinks := make([]*bpf.BPFLink, len(functionSymbolList))
+		exitLinks := make([][]*bpf.BPFLink, len(functionSymbolList))
+		for id, functionSymbol := range functionSymbolList {
+			offset, err := helpers.SymbolToOffset(args[0], functionSymbol)
 			if err != nil {
-				fmt.Printf("error attaching uprobe at function (%s) RET: %d, error: %v\n", functionName, offset+uint32(offsetRet), err)
+				fmt.Printf("error finding function (%s) offset: %v\n", functionSymbol, err)
 				os.Exit(-1)
 			}
-			defer func() {
-				for _, up := range exitLinks {
-					up.Destroy()
+			enterLink, err := enterFuncProbe.AttachUprobe(-1, args[0], offset)
+			if err != nil {
+				fmt.Printf("error attaching uprobe at function (%s) offset: %d, error: %v\n", functionSymbol, offset, err)
+				os.Exit(-1)
+			}
+			enterLinks = append(enterLinks, enterLink)
+
+			/*
+				Since the uretprobes doesn't work well with Go binaries,
+				we are going to attach a uprobe ∀ RET instruction withing the
+				traced function.
+			*/
+			functionRetOffsets, err := elfreader.GetFunctionRetOffsets(args[0], functionSymbol)
+			for _, offsetRet := range functionRetOffsets {
+				exitLink, err := exitFuncProbe.AttachUprobe(-1, args[0], offset+uint32(offsetRet))
+				if err != nil {
+					fmt.Printf("error attaching uprobe at function (%s) RET: %d, error: %v\n", functionSymbol, offset+uint32(offsetRet), err)
+					os.Exit(-1)
 				}
-				return
-			}()
+				exitLinks[id] = append(exitLinks[id], exitLink)
+			}
 		}
 
 		traceLink, err := traceFunction.AttachTracepoint(tracepointCategory, tracepointName)
@@ -203,7 +200,7 @@ by passing the function name symbol and the binary args.
 
 		var errOut error
 		if save {
-			fileName := archiver.Convert(functionName)
+			fileName := archiver.Convert(functionSymbolList[0])
 			err := os.Mkdir(directory, 0766)
 			if err != nil {
 				fmt.Printf("error creating directory: %v\n", err)
@@ -235,8 +232,8 @@ by passing the function name symbol and the binary args.
 func init() {
 	rootCmd.AddCommand(captureCmd)
 
-	captureCmd.Flags().StringVarP(&functionName, "function", "f", "", "Name of the function to be traced")
-	captureCmd.MarkFlagRequired("function")
+	captureCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
+	captureCmd.MarkFlagRequired("functions")
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
 
