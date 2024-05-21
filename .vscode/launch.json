@@ -5,11 +5,16 @@
             "name": "Run as root",
             "type": "go",
             "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
+            "mode": "exec",
+            "program": "${workspaceFolder}/bin/harpoon",
             "asRoot": true,
             "console": "integratedTerminal",
-            "args": ["-fn", "<fuctionName>", "-co", "</path/to/command>"]
+            "args": ["capture", 
+                "-f", 
+                "<function_list,...>", 
+                "/path/to/command",
+                "args"
+            ]
         }
     ]
 }
