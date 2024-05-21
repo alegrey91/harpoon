@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2024 Alessio Greggi
+
 #include "vmlinux.h"
+
 #include <bpf/bpf_helpers.h>       /* most used helpers: SEC, __always_inline, etc */
 
 struct {
@@ -47,32 +49,35 @@ __bpf_strncmp(const void *x, const void *y, __u64 len) {
 	return 0;
 }
 
-// enter_function submit the value 1 to advice 
+// enter_function submit the value 0 to advice 
 // the frontend app that the function started its
 // execution
 SEC("uprobe/enter_function")
 int enter_function(struct pt_regs *ctx) {
 	struct tracing tc = {};
 	__u32 key_map_trace = 0;
-	tc.status = 1;
+	tc.status = 0;
 	bpf_map_update_elem(&tracing_status, &key_map_trace, &tc, 0);
 	bpf_printk("enter function");
 	return 0;
 }
 
-// exit_function submit the value 2 to advice 
+// exit_function submit the value 1 to advice 
 // the frontend app that the function finished its
 // execution
 SEC("uprobe/exit_function")
 int exit_function(struct pt_regs *ctx) {
 	struct tracing tc = {};
 	__u32 key_map_trace = 0;
-	tc.status = 2;
+	tc.status = 1;
 	bpf_map_update_elem(&tracing_status, &key_map_trace, &tc, 0);
 	bpf_printk("exit function");
 	return 0;
 }
 
+// trace_syscall filter out the system calls executed
+// in the system and return through a perf buffer the ones
+// executed within the function defined by the uprobes.
 SEC("tracepoint/raw_syscalls/sys_enter")
 int trace_syscall(struct trace_event_raw_sys_enter* args) {
 	struct syscall_data data = {};
@@ -86,7 +91,7 @@ int trace_syscall(struct trace_event_raw_sys_enter* args) {
 		//bpf_printk("error getting tracing status");
 		return 1;
 	}
-	if (tc->status != 1) {
+	if (tc->status != 0) {
 		//bpf_printk("tracing is not active, status=%d", tc->status);
 		return 1;
 	}
@@ -101,10 +106,8 @@ int trace_syscall(struct trace_event_raw_sys_enter* args) {
 
 	// skip if the command is not the one we want to trace
 	if (__bpf_strncmp(comm, input_command, sizeof(comm)) != 0) {
-		/*
-			This is for debugging purposes, check output with:
-			`sudo cat /sys/kernel/debug/tracing/trace_pipe`
-		*/
+		// This is for debugging purposes, check output with:
+		// `sudo cat /sys/kernel/debug/tracing/trace_pipe`
 		//bpf_printk("command doesn't match: %s / input command: %s\n", comm, input_command);
 		return 1;
 	}
@@ -112,6 +115,9 @@ int trace_syscall(struct trace_event_raw_sys_enter* args) {
 	int id = (int)args->id;
 	data.syscall_id = id;
 	bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
+
+	//u32 cpu = bpf_get_smp_processor_id();
+	//bpf_printk("sending syscall ID: %d, cpu: %d", id, cpu);
 	bpf_printk("sending syscall ID: %d", id);
 	return 0;
 }
