@@ -27,12 +27,11 @@ import (
 	"unsafe"
 
 	"github.com/alegrey91/harpoon/internal/archiver"
-	"github.com/alegrey91/harpoon/internal/elfreader"
 	embedded "github.com/alegrey91/harpoon/internal/embeddable"
 	"github.com/alegrey91/harpoon/internal/executor"
+	probes "github.com/alegrey91/harpoon/internal/probesfacade"
 	syscallsw "github.com/alegrey91/harpoon/internal/syscallswriter"
 	bpf "github.com/aquasecurity/libbpfgo"
-	"github.com/aquasecurity/libbpfgo/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -41,6 +40,7 @@ type event struct {
 }
 
 var functionSymbols string
+var file string
 var commandOutput bool
 var libbpfOutput bool
 var save bool
@@ -63,8 +63,6 @@ by passing the function name symbol and the binary args.
 `,
 	Example: "  harpoon -f main.doSomething ./command arg1 arg2 ...",
 	Run: func(cmd *cobra.Command, args []string) {
-		functionSymbolList := strings.Split(functionSymbols, ",")
-
 		if !libbpfOutput {
 			// suppress libbpf log ouput
 			bpf.SetLoggerCbs(
@@ -76,6 +74,8 @@ by passing the function name symbol and the binary args.
 			)
 		}
 
+		functionSymbolList := strings.Split(functionSymbols, ",")
+
 		objectFile, err := embedded.BPFObject.ReadFile("output/ebpf.o")
 		bpfModule, err := bpf.NewModuleFromBuffer(objectFile, "ebpf.o")
 		if err != nil {
@@ -86,7 +86,7 @@ by passing the function name symbol and the binary args.
 
 		/*
 			HashMap used for passing various configuration
-			from user-space to kernel-space.
+			from user-space to ebpf program.
 		*/
 		config, err := bpfModule.GetMap(bpfConfigMap)
 		if err != nil {
@@ -110,34 +110,17 @@ by passing the function name symbol and the binary args.
 		}
 
 		bpfModule.BPFLoadObject()
-		enterLinks := make([]*bpf.BPFLink, len(functionSymbolList))
-		exitLinks := make([][]*bpf.BPFLink, len(functionSymbolList))
-		for id, functionSymbol := range functionSymbolList {
-			offset, err := helpers.SymbolToOffset(args[0], functionSymbol)
+		for _, functionSymbol := range functionSymbolList {
+			offset, err := probes.AttachUProbe(args[0], functionSymbol, enterFuncProbe)
 			if err != nil {
-				fmt.Printf("error finding function (%s) offset: %v\n", functionSymbol, err)
+				fmt.Printf("error attaching uprobe to %s: %v", functionSymbol, err)
 				os.Exit(-1)
 			}
-			enterLink, err := enterFuncProbe.AttachUprobe(-1, args[0], offset)
-			if err != nil {
-				fmt.Printf("error attaching uprobe at function (%s) offset: %d, error: %v\n", functionSymbol, offset, err)
-				os.Exit(-1)
-			}
-			enterLinks = append(enterLinks, enterLink)
 
-			/*
-				Since the uretprobes doesn't work well with Go binaries,
-				we are going to attach a uprobe ∀ RET instruction withing the
-				traced function.
-			*/
-			functionRetOffsets, err := elfreader.GetFunctionRetOffsets(args[0], functionSymbol)
-			for _, offsetRet := range functionRetOffsets {
-				exitLink, err := exitFuncProbe.AttachUprobe(-1, args[0], offset+uint32(offsetRet))
-				if err != nil {
-					fmt.Printf("error attaching uprobe at function (%s) RET: %d, error: %v\n", functionSymbol, offset+uint32(offsetRet), err)
-					os.Exit(-1)
-				}
-				exitLinks[id] = append(exitLinks[id], exitLink)
+			err = probes.AttachURETProbe(args[0], functionSymbol, exitFuncProbe, offset)
+			if err != nil {
+				fmt.Printf("error attaching uretprobe to %s: %v", functionSymbol, err)
+				os.Exit(-1)
 			}
 		}
 
@@ -233,6 +216,7 @@ func init() {
 	rootCmd.AddCommand(captureCmd)
 
 	captureCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
+	captureCmd.Flags().StringVarP(&file, "file", "F", "", "Path to the file that contains the list of symbols and test binaries obtained form 'analyze' command")
 	captureCmd.MarkFlagRequired("functions")
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
