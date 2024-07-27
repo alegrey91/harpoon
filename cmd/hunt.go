@@ -82,9 +82,9 @@ func init() {
 	rootCmd.AddCommand(huntCmd)
 
 	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", ".harpoon.yaml", "File with the result of analysis")
+	huntCmd.MarkFlagRequired("file")
 
 	huntCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
-	//huntCmd.MarkFlagRequired("functions")
 
 	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
 
