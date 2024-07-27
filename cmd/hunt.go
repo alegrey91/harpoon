@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/alegrey91/harpoon/internal/captor"
 	meta "github.com/alegrey91/harpoon/internal/metadata"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
@@ -28,9 +30,6 @@ import (
 var (
 	harpoonFile string
 )
-
-type AnalysisReport struct {
-}
 
 // huntCmd represents the create args
 var huntCmd = &cobra.Command{
@@ -60,7 +59,21 @@ var huntCmd = &cobra.Command{
 		//fmt.Println(analysisReport)
 
 		for _, symbolsOrigins := range analysisReport.SymbolsOrigins {
-			fmt.Println(symbolsOrigins)
+			fmt.Println("test binary:", symbolsOrigins.TestBinaryPath)
+			fmt.Println("symbols:", symbolsOrigins.Symbols)
+
+			// command builder
+			var captureArgs []string
+			captureArgs = append(captureArgs, symbolsOrigins.TestBinaryPath)
+			functionSymbols := strings.Join(symbolsOrigins.Symbols, ",")
+			opts := captor.CaptureOptions{
+				CommandOutput: commandOutput,
+				LibbpfOutput:  libbpfOutput,
+				Save:          save,
+				Directory:     directory,
+			}
+
+			captor.Capture(functionSymbols, captureArgs, opts)
 		}
 	},
 }
@@ -68,5 +81,16 @@ var huntCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(huntCmd)
 
-	huntCmd.Flags().StringVarP(&harpoonFile, "file", "f", ".harpoon.yaml", "File with the result of analysis")
+	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", ".harpoon.yaml", "File with the result of analysis")
+
+	huntCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
+	//huntCmd.MarkFlagRequired("functions")
+
+	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
+
+	huntCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
+
+	huntCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
+	huntCmd.Flags().StringVarP(&directory, "directory", "D", "", "Directory to use to store saved files")
+	huntCmd.MarkFlagsRequiredTogether("save", "directory")
 }
