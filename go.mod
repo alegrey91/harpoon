@@ -19,4 +19,5 @@ require (
 require (
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/sys v0.16.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )
