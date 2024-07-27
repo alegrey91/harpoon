@@ -40,6 +40,8 @@ getrlimit
 
 These are the syscalls that have been executed by the traced function!
 
+**N.B.** For a complete list of available command, take a look [here](docs/commands.md).
+
 ## Installation
 
 To install `harpoon` you currently have 2 options:
