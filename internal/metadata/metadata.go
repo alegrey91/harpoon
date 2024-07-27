@@ -3,7 +3,7 @@ package metadata
 import "fmt"
 
 type SymbolsList struct {
-	SymbolsOrigins []SymbolsOrigin
+	SymbolsOrigins []SymbolsOrigin `yaml:"symbolsOrigins"`
 }
 
 func NewSymbolsList() *SymbolsList {
@@ -18,7 +18,7 @@ func (sl *SymbolsList) String() string {
 	output := "---\n"
 	output += "symbolsOrigins:\n"
 	for _, symbolsOrigin := range sl.SymbolsOrigins {
-		output += fmt.Sprintf("  - %s:\n", symbolsOrigin.TestBinaryPath)
+		output += fmt.Sprintf("  - testBinaryPath: %s\n", symbolsOrigin.TestBinaryPath)
 		output += "    symbols:\n"
 		for _, symbol := range symbolsOrigin.Symbols {
 			output += fmt.Sprintf("    - %s\n", symbol)
@@ -28,8 +28,8 @@ func (sl *SymbolsList) String() string {
 }
 
 type SymbolsOrigin struct {
-	TestBinaryPath string
-	Symbols        []string
+	TestBinaryPath string   `yaml:"testBinaryPath"`
+	Symbols        []string `yaml:"symbols"`
 }
 
 func NewSymbolsOrigin(testBinPath string) *SymbolsOrigin {

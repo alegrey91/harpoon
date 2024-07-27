@@ -32,7 +32,7 @@ var excludedPaths []string
 var exclude string
 var saveAnalysis bool
 
-// captureCmd represents the create args
+// analyzeCmd represents the create args
 var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze infers the symbols of functions that are tested by unit-tests",
@@ -142,7 +142,7 @@ func init() {
 	rootCmd.AddCommand(analyzeCmd)
 
 	analyzeCmd.Flags().StringVarP(&exclude, "exclude", "e", "", "Skip directories specified in the comma separated list")
-	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "s", false, "Save analysis in a file")
+	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "s", false, "Save the result of analysis into a file")
 }
 
 func shouldSkipPath(path string) bool {
