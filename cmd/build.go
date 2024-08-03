@@ -84,6 +84,7 @@ var buildCmd = &cobra.Command{
 
 			if err := profileFile.Chmod(0644); err != nil {
 				fmt.Printf("error setting permissions to %s: %v\n", profileFile.Name(), err)
+				return
 			}
 			// write to file
 			fmt.Fprintln(profileFile, profile)
