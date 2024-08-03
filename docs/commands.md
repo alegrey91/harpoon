@@ -4,7 +4,7 @@ Harpoon has several commands that you can use.
 
 The common way of using `harpoon` is to execute the available commands as follow:
 
-* [`harpoon analize`](#analyze-) to analyze the project to infer symbols to be traced. This will create a `.harpoon.yml` file.
+* [`harpoon analyze`](#analyze-) to analyze the project to infer symbols to be traced. This will create a `.harpoon.yml` file.
 
 * [`harpoon hunt`](#hunt-) by passing the `.harpoon.yml` file to trace the functions and get their system calls. This will generate the `./harpoon/` directory with the metadata that contains the system calls traced.
 
