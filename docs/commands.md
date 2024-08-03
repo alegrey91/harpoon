@@ -26,7 +26,7 @@ sudo harpoon analyze --exclude .git/ .
 
 ## Build
 
-The `build` command collect the metadata files (created by the `hunt` command under the `harpoon/` directory) and use them to create a **seccomp** profile based on their content.
+The `build` command collects the metadata files (created by the `hunt` command under the `harpoon/` directory) and use them to create a **seccomp** profile based on their content.
 
 ```sh
 sudo harpoon build -D ./harpoon/
