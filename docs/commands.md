@@ -34,7 +34,7 @@ sudo harpoon build -D ./harpoon/
 
 ## Capture
 
-The `capture` command is the "core" of `harpoon`. This trace the function symbols passed as argument for the give binary.
+The `capture` command is the "core" of `harpoon`. This traces the function symbols passed as argument for the give binary.
 
 ```sh
 sudo harpoon capture -f github.com/user/repo/pkg/pkgname.functionName .harpoon/packagebin.test
