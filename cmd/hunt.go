@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/alegrey91/harpoon/internal/captor"
 	meta "github.com/alegrey91/harpoon/internal/metadata"
+	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -65,15 +65,24 @@ var huntCmd = &cobra.Command{
 			// command builder
 			var captureArgs []string
 			captureArgs = append(captureArgs, symbolsOrigins.TestBinaryPath)
-			functionSymbols := strings.Join(symbolsOrigins.Symbols, ",")
 			opts := captor.CaptureOptions{
 				CommandOutput: commandOutput,
 				LibbpfOutput:  libbpfOutput,
-				Save:          save,
-				Directory:     directory,
 			}
 
-			captor.Capture(functionSymbols, captureArgs, opts)
+			for _, functionSymbol := range symbolsOrigins.Symbols {
+				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
+				if err != nil {
+					fmt.Printf("error capturing syscall: %v", err)
+					os.Exit(1)
+				}
+
+				saveOpts := writer.WriteOptions{
+					Save:      save,
+					Directory: directory,
+				}
+				writer.Write(syscalls, functionSymbol, saveOpts)
+			}
 		}
 	},
 }
@@ -83,8 +92,6 @@ func init() {
 
 	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", ".harpoon.yaml", "File with the result of analysis")
 	huntCmd.MarkFlagRequired("file")
-
-	huntCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
 
 	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
 

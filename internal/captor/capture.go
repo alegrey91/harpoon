@@ -5,17 +5,13 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 	"unsafe"
 
-	"github.com/alegrey91/harpoon/internal/archiver"
 	embedded "github.com/alegrey91/harpoon/internal/embeddable"
 	"github.com/alegrey91/harpoon/internal/executor"
 	probes "github.com/alegrey91/harpoon/internal/probesfacade"
-	syscallsw "github.com/alegrey91/harpoon/internal/syscallswriter"
 	bpf "github.com/aquasecurity/libbpfgo"
 )
 
@@ -36,11 +32,9 @@ type event struct {
 type CaptureOptions struct {
 	CommandOutput bool
 	LibbpfOutput  bool
-	Save          bool
-	Directory     string
 }
 
-func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
+func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]uint32, error) {
 	if !opts.LibbpfOutput {
 		// suppress libbpf log ouput
 		bpf.SetLoggerCbs(
@@ -52,13 +46,10 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 		)
 	}
 
-	functionSymbolList := strings.Split(functionSymbols, ",")
-
 	objectFile, err := embedded.BPFObject.ReadFile("output/ebpf.o")
 	bpfModule, err := bpf.NewModuleFromBuffer(objectFile, "ebpf.o")
 	if err != nil {
-		fmt.Printf("error loading BPF object file: %v\n", err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error loading BPF object file: %v", err)
 	}
 	defer bpfModule.Close()
 
@@ -68,44 +59,35 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 	*/
 	config, err := bpfModule.GetMap(bpfConfigMap)
 	if err != nil {
-		fmt.Printf("error retrieving map (%s) from BPF program: %v\n", bpfConfigMap, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error retrieving map (%s) from BPF program: %v", bpfConfigMap, err)
 	}
 	enterFuncProbe, err := bpfModule.GetProgram(uprobeEnterFunc)
 	if err != nil {
-		fmt.Printf("error loading program (%s): %v\n", uprobeEnterFunc, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error loading program (%s): %v", uprobeEnterFunc, err)
 	}
 	exitFuncProbe, err := bpfModule.GetProgram(uprobeExitFunc)
 	if err != nil {
-		fmt.Printf("error loading program (%s): %v\n", uprobeExitFunc, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error loading program (%s): %v", uprobeExitFunc, err)
 	}
 	traceFunction, err := bpfModule.GetProgram(tracepointFunc)
 	if err != nil {
-		fmt.Printf("error loading program (%s): %v\n", tracepointFunc, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error loading program (%s): %v", tracepointFunc, err)
 	}
 
 	bpfModule.BPFLoadObject()
-	for _, functionSymbol := range functionSymbolList {
-		offset, err := probes.AttachUProbe(cmdArgs[0], functionSymbol, enterFuncProbe)
-		if err != nil {
-			fmt.Printf("error attaching uprobe to %s: %v", functionSymbol, err)
-			os.Exit(-1)
-		}
+	offset, err := probes.AttachUProbe(cmdArgs[0], functionSymbol, enterFuncProbe)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching uprobe to %s: %v", functionSymbol, err)
+	}
 
-		err = probes.AttachURETProbe(cmdArgs[0], functionSymbol, exitFuncProbe, offset)
-		if err != nil {
-			fmt.Printf("error attaching uretprobe to %s: %v", functionSymbol, err)
-			os.Exit(-1)
-		}
+	err = probes.AttachURETProbe(cmdArgs[0], functionSymbol, exitFuncProbe, offset)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching uretprobe to %s: %v", functionSymbol, err)
 	}
 
 	traceLink, err := traceFunction.AttachTracepoint(tracepointCategory, tracepointName)
 	if err != nil {
-		fmt.Printf("error attaching tracepoint at event (%s:%s): %v\n", tracepointCategory, tracepointName, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error attaching tracepoint at event (%s:%s): %v", tracepointCategory, tracepointName, err)
 	}
 	defer traceLink.Destroy()
 
@@ -118,8 +100,7 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 	baseCmd := append([]byte(baseargs), 0)
 	err = config.Update(unsafe.Pointer(&config_key_args), unsafe.Pointer(&baseCmd[0]))
 	if err != nil {
-		fmt.Printf("error updating map (%s) with values %d / %s: %v\n", bpfConfigMap, config_key_args, baseargs, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error updating map (%s) with values %d / %s: %v", bpfConfigMap, config_key_args, baseargs, err)
 	}
 
 	// init perf buffer
@@ -127,8 +108,7 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 	lostChannel := make(chan uint64)
 	rb, err := bpfModule.InitPerfBuf(bpfEventsMap, eventsChannel, lostChannel, 1)
 	if err != nil {
-		fmt.Printf("error initializing map (%s) with PerfBuffer: %v\n", bpfEventsMap, err)
-		os.Exit(-1)
+		return nil, fmt.Errorf("error initializing map (%s) with PerfBuffer: %v", bpfEventsMap, err)
 	}
 
 	// run args that we want to trace
@@ -144,6 +124,7 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 				var e event
 				err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e)
 				if err != nil {
+					fmt.Fprintf(os.Stderr, "error reading event: %v\n", err)
 					return
 				}
 				syscalls = append(syscalls, e.SyscallID)
@@ -159,32 +140,5 @@ func Capture(functionSymbols string, cmdArgs []string, opts CaptureOptions) {
 	wg.Wait()
 	rb.Stop()
 
-	var errOut error
-	if opts.Save {
-		fileName := archiver.Convert(functionSymbolList[0])
-		err := os.MkdirAll(opts.Directory, os.ModePerm)
-		if err != nil {
-			fmt.Printf("error creating directory: %v\n", err)
-			os.Exit(-1)
-		}
-		file, err := os.Create(path.Join(opts.Directory, fileName))
-		if err != nil {
-			fmt.Printf("error creating file %s: %v\n", file.Name(), err)
-			os.Exit(-1)
-		}
-		defer file.Close()
-
-		if err := file.Chmod(0744); err != nil {
-			fmt.Printf("error setting permissions to %s: %v\n", file.Name(), err)
-		}
-		// write to file
-		errOut = syscallsw.Print(file, syscalls)
-	} else {
-		// write to stdout
-		errOut = syscallsw.Print(os.Stdout, syscalls)
-	}
-	if errOut != nil {
-		fmt.Printf("error printing out system calls: %v\n", errOut)
-		os.Exit(-1)
-	}
+	return syscalls, nil
 }
