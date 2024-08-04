@@ -16,7 +16,11 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/alegrey91/harpoon/internal/captor"
+	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
 )
 
@@ -34,14 +38,29 @@ var captureCmd = &cobra.Command{
 by passing the function name symbol and the binary args.
 `,
 	Example: "  harpoon -f main.doSomething ./command arg1 arg2 ...",
-	Run: func(cmd *cobra.Command, args []string) {
-		opts := captor.CaptureOptions{
+	RunE: func(cmd *cobra.Command, args []string) error {
+
+		functionSymbolList := strings.Split(functionSymbols, ",")
+
+		captureOpts := captor.CaptureOptions{
 			CommandOutput: commandOutput,
 			LibbpfOutput:  libbpfOutput,
-			Save:          save,
-			Directory:     directory,
 		}
-		captor.Capture(functionSymbols, args, opts)
+		for _, functionSymbol := range functionSymbolList {
+			syscalls, err := captor.Capture(functionSymbol, args, captureOpts)
+			if err != nil {
+				return fmt.Errorf("error capturing syscall: %w", err)
+			}
+
+			saveOpts := writer.WriteOptions{
+				Save:      save,
+				Directory: directory,
+			}
+			if err := writer.Write(syscalls, functionSymbols, saveOpts); err != nil {
+				return fmt.Errorf("error writing syscalls for symbol %s: %w", functionSymbol, err)
+			}
+		}
+		return nil
 	},
 }
 
