@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/alegrey91/harpoon/internal/captor"
@@ -39,7 +38,7 @@ var captureCmd = &cobra.Command{
 by passing the function name symbol and the binary args.
 `,
 	Example: "  harpoon -f main.doSomething ./command arg1 arg2 ...",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		functionSymbolList := strings.Split(functionSymbols, ",")
 
@@ -50,8 +49,7 @@ by passing the function name symbol and the binary args.
 		for _, functionSymbol := range functionSymbolList {
 			syscalls, err := captor.Capture(functionSymbol, args, captureOpts)
 			if err != nil {
-				fmt.Printf("error capturing syscall: %v", err)
-				os.Exit(1)
+				return fmt.Errorf("error capturing syscall: %v", err)
 			}
 
 			saveOpts := writer.WriteOptions{
@@ -59,10 +57,10 @@ by passing the function name symbol and the binary args.
 				Directory: directory,
 			}
 			if err := writer.Write(syscalls, functionSymbols, saveOpts); err != nil {
-				fmt.Printf("error writing syscalls for symbol %s", functionSymbol)
-				os.Exit(1)
+				return fmt.Errorf("error writing syscalls for symbol %s", functionSymbol)
 			}
 		}
+		return nil
 	},
 }
 
