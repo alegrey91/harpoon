@@ -53,7 +53,7 @@ var huntCmd = &cobra.Command{
 		// Unmarshal the JSON data into the struct
 		var analysisReport meta.SymbolsList
 		if err := yaml.Unmarshal(byteValue, &analysisReport); err != nil {
-			return fmt.Errorf("failed to unmarshal YAML: %w", err)
+			return fmt.Errorf("failed to unmarshal YAML in %q: %w", harpoonFile, err)
 		}
 		//fmt.Println(analysisReport)
 
