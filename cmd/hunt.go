@@ -38,23 +38,22 @@ var huntCmd = &cobra.Command{
 	Long: `
 `,
 	Example: "  harpoon hunt --file .harpoon.yaml",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		file, err := os.Open(harpoonFile)
 		if err != nil {
-			fmt.Printf("failed to open %s: %v\n", harpoonFile, err)
-			return
+			return fmt.Errorf("failed to open %s: %w", harpoonFile, err)
 		}
 		defer file.Close()
 
 		byteValue, err := io.ReadAll(file)
 		if err != nil {
-			fmt.Printf("Failed to read file: %s", err)
+			return fmt.Errorf("failed to read file: %w", err)
 		}
 
 		// Unmarshal the JSON data into the struct
 		var analysisReport meta.SymbolsList
 		if err := yaml.Unmarshal(byteValue, &analysisReport); err != nil {
-			fmt.Printf("Failed to unmarshal YAML: %v", err)
+			return fmt.Errorf("failed to unmarshal YAML: %w", err)
 		}
 		//fmt.Println(analysisReport)
 
@@ -73,17 +72,19 @@ var huntCmd = &cobra.Command{
 			for _, functionSymbol := range symbolsOrigins.Symbols {
 				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
 				if err != nil {
-					fmt.Printf("error capturing syscall: %v", err)
-					os.Exit(1)
+					return fmt.Errorf("error capturing syscall: %w", err)
 				}
 
 				saveOpts := writer.WriteOptions{
 					Save:      save,
 					Directory: directory,
 				}
-				writer.Write(syscalls, functionSymbol, saveOpts)
+				if err = writer.Write(syscalls, functionSymbol, saveOpts); err != nil {
+					return fmt.Errorf("error writing seccomp profile: %w", err)
+				}
 			}
 		}
+		return nil
 	},
 }
 
