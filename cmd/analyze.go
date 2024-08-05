@@ -46,7 +46,7 @@ var analyzeCmd = &cobra.Command{
 
 		file, err := os.Open("go.mod")
 		if err != nil {
-			return fmt.Errorf("failed to open %s: %w", "go.mod", err)
+			return fmt.Errorf("failed to open go.mod: %w", err)
 		}
 		defer file.Close()
 
