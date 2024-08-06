@@ -37,11 +37,10 @@ var buildCmd = &cobra.Command{
 	Long: `
 `,
 	Example: "  harpoon build",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		files, err := os.ReadDir(inputDirectory)
 		if err != nil {
-			fmt.Printf("error reading dir content: %v", err)
-			return
+			return fmt.Errorf("error reading dir content: %w", err)
 		}
 
 		syscalls := make([]string, 0)
@@ -50,8 +49,7 @@ var buildCmd = &cobra.Command{
 
 			file, err := os.Open(inputDirectory + "/" + fileObj.Name())
 			if err != nil {
-				fmt.Printf("error opening file %s: %v", file.Name(), err)
-				return
+				return fmt.Errorf("error opening file %s: %w", file.Name(), err)
 			}
 			defer file.Close()
 
@@ -71,26 +69,26 @@ var buildCmd = &cobra.Command{
 
 		profile, err := seccomp.BuildProfile(syscalls)
 		if err != nil {
-			fmt.Printf("error building seccomp profile: %v", err)
+			return fmt.Errorf("error building seccomp profile: %w", err)
 		}
 
 		if saveProfile {
 			profileFile, err := os.Create(profileName)
 			if err != nil {
-				fmt.Printf("error creating seccomp file %s: %v\n", profileFile.Name(), err)
-				return
+				return fmt.Errorf("error creating seccomp file %s: %w", profileFile.Name(), err)
 			}
 			defer profileFile.Close()
 
 			if err := profileFile.Chmod(0644); err != nil {
-				fmt.Printf("error setting permissions to %s: %v\n", profileFile.Name(), err)
-				return
+				return fmt.Errorf("error setting permissions to %s: %w", profileFile.Name(), err)
 			}
 			// write to file
 			fmt.Fprintln(profileFile, profile)
 		} else {
 			fmt.Println(profile)
 		}
+
+		return nil
 	},
 }
 

@@ -39,22 +39,20 @@ var analyzeCmd = &cobra.Command{
 	Long: `
 `,
 	Example: "  harpoon analyze --exclude vendor/ /path/to/repo/",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if exclude != "" {
 			excludedPaths = strings.Split(exclude, ",")
 		}
 
 		file, err := os.Open("go.mod")
 		if err != nil {
-			fmt.Printf("failed to open %s: %v\n", "go.mod", err)
-			return
+			return fmt.Errorf("failed to open go.mod: %w", err)
 		}
 		defer file.Close()
 
 		moduleName, err := analyzer.GetModuleName(file)
 		if err != nil {
-			fmt.Println("module name not found in go.mod")
-			return
+			return fmt.Errorf("error module name not found in go.mod: %w", err)
 		}
 
 		symbolsList := metadata.NewSymbolsList()
@@ -129,12 +127,12 @@ var analyzeCmd = &cobra.Command{
 		// store to file
 		file, err = os.Create(".harpoon.yml")
 		if err != nil {
-			fmt.Printf("failed to create symbols list file")
-			return
+			return fmt.Errorf("failed to create symbols list file: %w", err)
 		}
 		mw := io.Writer(file)
 		fmt.Fprintln(mw, symbolsList.String())
 		fmt.Println("file .harpoon.yml is ready")
+		return nil
 	},
 }
 
