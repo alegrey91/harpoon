@@ -19,6 +19,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 
 	seccomp "github.com/alegrey91/harpoon/internal/seccomputils"
 	"github.com/spf13/cobra"
@@ -44,28 +46,27 @@ var buildCmd = &cobra.Command{
 		}
 
 		syscalls := make([]string, 0)
+		var syscallList = make(map[string]int)
 		for _, fileObj := range files {
-			//fmt.Println("[" + fileObj.Name() + "]")
-
-			file, err := os.Open(inputDirectory + "/" + fileObj.Name())
+			file, err := os.Open(filepath.Join(inputDirectory, fileObj.Name()))
 			if err != nil {
-				return fmt.Errorf("error opening file %s: %w", file.Name(), err)
+				return fmt.Errorf("error opening file %q: %w", fileObj.Name(), err)
 			}
 			defer file.Close()
 
 			// collect system calls from file
-			var syscallList = make(map[string]int)
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				syscall := scanner.Text()
 				syscallList[string(syscall)]++
 			}
-
-			// convert map to list of string
-			for value := range syscallList {
-				syscalls = append(syscalls, value)
-			}
 		}
+
+		// convert map to list of string
+		for value := range syscallList {
+			syscalls = append(syscalls, value)
+		}
+		sort.Strings(syscalls)
 
 		profile, err := seccomp.BuildProfile(syscalls)
 		if err != nil {
