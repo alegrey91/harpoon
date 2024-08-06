@@ -52,7 +52,7 @@ var analyzeCmd = &cobra.Command{
 
 		moduleName, err := analyzer.GetModuleName(file)
 		if err != nil {
-			return fmt.Errorf("module name not found in go.mod")
+			return fmt.Errorf("error module name not found in go.mod: %w", err)
 		}
 
 		symbolsList := metadata.NewSymbolsList()

@@ -47,7 +47,7 @@ var huntCmd = &cobra.Command{
 
 		byteValue, err := io.ReadAll(file)
 		if err != nil {
-			return fmt.Errorf("failed to read file: %w", err)
+			return fmt.Errorf("failed to read file %q: %w", file.Name(), err)
 		}
 
 		// Unmarshal the JSON data into the struct
