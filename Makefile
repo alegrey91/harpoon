@@ -26,6 +26,19 @@ build-go: create-bin-dir
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
+build-go-cover: create-bin-dir
+	go mod download
+	export CURRENT_DIR=$(shell pwd); \
+	CC=gcc \
+	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf/libbpf.a" \
+	go build \
+		-tags core,ebpf \
+		-v \
+		-cover \
+		-o ${BINARY_DIR}/${BINARY_NAME} \
+		.
+
 build: create-bin-dir vmlinux.h build-static-libbpfgo build-bpf
 	go mod download
 	export CURRENT_DIR=$(shell pwd); \
@@ -59,6 +72,9 @@ create-bin-dir:
 
 create-output-dir:
 	mkdir -p ${OUTPUT_DIR}
+
+install:
+	cp ${BINARY_DIR}/${BINARY_NAME} /usr/local/bin/
 
 clean:
 	rm -rf ${OUTPUT_DIR}
