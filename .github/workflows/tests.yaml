@@ -15,7 +15,7 @@ jobs:
 
       - name: Build coverage-instrumented binary
         run: |
-          make build-cover && sudo make -B install
+          make build-go-cover && sudo make -B install
 
       - name: Set up Go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # ratchet:actions/setup-go@v4
@@ -50,7 +50,7 @@ jobs:
 
       - name: Build coverage-instrumented binary
         run: |
-          make build-cover && sudo make -B install
+          make build-go-cover && sudo make -B install
 
       - name: Run integration test
         run: |
