@@ -49,7 +49,7 @@ by passing the function name symbol and the binary args.
 		for _, functionSymbol := range functionSymbolList {
 			syscalls, err := captor.Capture(functionSymbol, args, captureOpts)
 			if err != nil {
-				return fmt.Errorf("error capturing syscall: %w", err)
+				fmt.Printf("error capturing syscall: %w", err)
 			}
 
 			saveOpts := writer.WriteOptions{
