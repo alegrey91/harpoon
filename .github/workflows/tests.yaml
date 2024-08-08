@@ -48,8 +48,16 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libbpf-dev                # Install libbpf dependency
+          sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
+
       - name: Build coverage-instrumented binary
         run: |
+          make build-static-libbpfgo
+          make build-bpf
           make build-go-cover && sudo make -B install
 
       - name: Run integration test
