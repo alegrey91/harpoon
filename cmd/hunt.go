@@ -72,7 +72,7 @@ var huntCmd = &cobra.Command{
 			for _, functionSymbol := range symbolsOrigins.Symbols {
 				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
 				if err != nil {
-					return fmt.Errorf("error capturing syscall: %w", err)
+					fmt.Printf("error capturing syscall: %w", err)
 				}
 
 				saveOpts := writer.WriteOptions{
