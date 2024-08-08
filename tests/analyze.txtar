@@ -1,0 +1,6 @@
+# this testscript test the 'analyze' command
+
+exec harpoon analyze -h
+stdout 'Usage:'
+
+
