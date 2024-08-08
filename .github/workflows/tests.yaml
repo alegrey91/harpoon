@@ -51,6 +51,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
+          sudo apt install -y clang
           sudo apt install -y libbpf-dev                # Install libbpf dependency
           sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
 
@@ -70,8 +71,7 @@ jobs:
           go test \
             -exec sudo \
             -cover \
-            -v ./... \
-            -run TestHarpoon/* \
+            -v main_test.go \
             -args -test.gocoverdir=/tmp/integration/
 
       - name: Upload cover profiles
@@ -105,7 +105,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.21'
 
       - name: Calculate total coverage
         run: |

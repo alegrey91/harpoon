@@ -1,8 +1,5 @@
 # this testscript test the 'analyze' command
 
-# if go is not installed, then skip
-[!exec:go] skip
-
 exec harpoon analyze -h
 stdout 'Usage:'
 
