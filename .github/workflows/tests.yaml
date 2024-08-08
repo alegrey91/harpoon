@@ -63,7 +63,7 @@ jobs:
 
       - name: Run integration test
         run: |
-          mkdir /tmp/integration
+          mkdir -p /tmp/integration
           # we have to run integration tests one-by-one
           # otherwhise they will run in parallel.
           # since harpoon apply network forwards, these could 
