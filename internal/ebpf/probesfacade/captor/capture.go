@@ -9,9 +9,9 @@ import (
 	"sync"
 	"unsafe"
 
+	probes "github.com/alegrey91/harpoon/internal/ebpf/probesfacade"
 	embedded "github.com/alegrey91/harpoon/internal/embeddable"
 	"github.com/alegrey91/harpoon/internal/executor"
-	probes "github.com/alegrey91/harpoon/internal/probesfacade"
 	bpf "github.com/aquasecurity/libbpfgo"
 )
 

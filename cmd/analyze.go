@@ -28,9 +28,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var excludedPaths []string
-var exclude string
-var saveAnalysis bool
+var (
+	excludedPaths []string
+	exclude       string
+	saveAnalysis  bool
+)
 
 // analyzeCmd represents the create args
 var analyzeCmd = &cobra.Command{
@@ -38,7 +40,7 @@ var analyzeCmd = &cobra.Command{
 	Short: "Analyze infers the symbols of functions that are tested by unit-tests",
 	Long: `
 `,
-	Example: "  harpoon analyze --exclude vendor/ /path/to/repo/",
+	Example: "  harpoon analyze --exclude vendor/ -s",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if exclude != "" {
 			excludedPaths = strings.Split(exclude, ",")
@@ -85,12 +87,12 @@ var analyzeCmd = &cobra.Command{
 				pkgPath := getPackagePath(path)
 				testFile := filepath.Base(path)
 				testFile = strings.ReplaceAll(testFile, "_test.go", ".test")
-				_, err = executor.Build(pkgPath, ".harpoon/"+testFile)
+				_, err = executor.Build(pkgPath, filepath.Join(".harpoon/", testFile))
 				if err != nil {
 					return fmt.Errorf("failed to build test file: %v", err)
 				}
 
-				symbolsOrig := metadata.NewSymbolsOrigin(".harpoon/" + testFile)
+				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(".harpoon/", testFile))
 
 				fmt.Println("test: .harpoon/" + testFile)
 				for _, symbol := range symbolNames {
@@ -125,13 +127,17 @@ var analyzeCmd = &cobra.Command{
 		}
 
 		// store to file
-		file, err = os.Create(".harpoon.yml")
-		if err != nil {
-			return fmt.Errorf("failed to create symbols list file: %w", err)
+		if saveAnalysis {
+			file, err = os.Create("harpoon-report.yml")
+			if err != nil {
+				return fmt.Errorf("failed to create symbols list file: %w", err)
+			}
+			mw := io.Writer(file)
+			fmt.Fprintln(mw, symbolsList.String())
+			fmt.Println("file harpoon-report.yml is ready")
+		} else {
+			fmt.Println(symbolsList.String())
 		}
-		mw := io.Writer(file)
-		fmt.Fprintln(mw, symbolsList.String())
-		fmt.Println("file .harpoon.yml is ready")
 		return nil
 	},
 }
@@ -140,7 +146,7 @@ func init() {
 	rootCmd.AddCommand(analyzeCmd)
 
 	analyzeCmd.Flags().StringVarP(&exclude, "exclude", "e", "", "Skip directories specified in the comma separated list")
-	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "s", false, "Save the result of analysis into a file")
+	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "S", false, "Save the result of analysis into a file")
 }
 
 func shouldSkipPath(path string) bool {
@@ -171,6 +177,7 @@ func getPackagePath(inputPath string) string {
 	// Adjust this according to your specific requirements
 	dirPath = strings.TrimPrefix(dirPath, "../")
 	dirPath = strings.TrimPrefix(dirPath, "./")
+	//dirPath = strings.TrimPrefix(inputPath, rootPath)
 
 	// Add "./" at the start again if necessary
 	dirPath = "./" + dirPath

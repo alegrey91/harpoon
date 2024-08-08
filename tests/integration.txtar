@@ -1,0 +1,57 @@
+# this testscript test the 'analyze' command
+
+# skip if go is not installed
+[!exec:go] skip
+
+# move on the testcases directory
+cd testcases/example-app/
+
+# test usage
+exec harpoon analyze -h
+stdout 'Usage:'
+
+exec harpoon analyze --save
+exists harpoon-report.yml
+exists .harpoon/
+cmp harpoon-report.yml harpoon-expected-report.yml
+
+exec harpoon hunt -S -D harpoon/ -F harpoon-report.yml
+exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_DoSomethingSpecial
+exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_FlipCoin
+exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_RockPaperScissors
+exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_ThrowDice
+
+exec harpoon build -D harpoon/ -S --name profile.json
+exists profile.json
+cmp profile.json expected-profile.json
+
+-- testcases/example-app/harpoon-expected-report.yml --
+---
+symbolsOrigins:
+  - testBinaryPath: .harpoon/randomic.test
+    symbols:
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.RockPaperScissors
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.ThrowDice
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.FlipCoin
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.DoSomethingSpecial
+
+-- testcases/example-app/expected-profile.json --
+{
+    "defaultAction": "SCMP_ACT_ERRNO",
+    "architectures": [
+        "SCMP_ARCH_X86_64",
+        "SCMP_ARCH_X86",
+        "SCMP_ARCH_X32"
+    ],
+    "syscalls": [
+        {
+            "names": [
+                "futex",
+                "gettid",
+                "nanosleep",
+                "write"
+            ],
+            "action": "SCMP_ACT_ALLOW"
+        }
+    ]
+}
