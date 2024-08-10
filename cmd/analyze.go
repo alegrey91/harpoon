@@ -87,7 +87,7 @@ var analyzeCmd = &cobra.Command{
 				pkgPath := getPackagePath(path)
 				testFile := filepath.Base(path)
 				testFile = strings.ReplaceAll(testFile, "_test.go", ".test")
-				_, err = executor.Build(pkgPath, filepath.Join(".harpoon/", testFile))
+				_, err = executor.Build(pkgPath, filepath.Join(".harpoon", testFile))
 				if err != nil {
 					return fmt.Errorf("failed to build test file: %v", err)
 				}
