@@ -92,7 +92,7 @@ var analyzeCmd = &cobra.Command{
 					return fmt.Errorf("failed to build test file: %v", err)
 				}
 
-				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(".harpoon/", testFile))
+				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(".harpoon", testFile))
 
 				fmt.Println("test: .harpoon/" + testFile)
 				for _, symbol := range symbolNames {
