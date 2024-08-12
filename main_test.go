@@ -48,16 +48,17 @@ func copyDir(src string, dst string) error {
 			if err != nil {
 				return err
 			}
-		} else {
-			data, err := os.ReadFile(srcPath)
-			if err != nil {
-				return err
-			}
+			continue
+		}
 
-			err = os.WriteFile(dstPath, data, 0644)
-			if err != nil {
-				return err
-			}
+		data, err := os.ReadFile(srcPath)
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(dstPath, data, 0644)
+		if err != nil {
+			return err
 		}
 	}
 
