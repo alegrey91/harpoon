@@ -18,8 +18,8 @@ build-go: create-bin-dir
 	go mod download
 	export CURRENT_DIR=$(shell pwd); \
 	CC=gcc \
-	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
-	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf/libbpf.a" \
+	CGO_CFLAGS="-I ${CURRENT_DIR}/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz ${CURRENT_DIR}/libbpfgo/output/libbpf/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
@@ -30,8 +30,8 @@ build-go-cover: create-bin-dir
 	go mod download
 	export CURRENT_DIR=$(shell pwd); \
 	CC=gcc \
-	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
-	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf/libbpf.a" \
+	CGO_CFLAGS="-I ${CURRENT_DIR}/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz ${CURRENT_DIR}/libbpfgo/output/libbpf/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
@@ -43,8 +43,8 @@ build: create-bin-dir vmlinux.h build-static-libbpfgo build-bpf
 	go mod download
 	export CURRENT_DIR=$(shell pwd); \
 	CC=gcc \
-	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
-	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf/libbpf.a" \
+	CGO_CFLAGS="-I ${CURRENT_DIR}/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz ${CURRENT_DIR}/libbpfgo/output/libbpf/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
@@ -58,8 +58,8 @@ endif
 	go mod download
 	export CURRENT_DIR=$(shell pwd); \
 	CC=gcc \
-	CGO_CFLAGS="-I $$CURRENT_DIR/libbpfgo/output" \
-	CGO_LDFLAGS="-lelf -lz $$CURRENT_DIR/libbpfgo/output/libbpf/libbpf.a" \
+	CGO_CFLAGS="-I ${CURRENT_DIR}/libbpfgo/output" \
+	CGO_LDFLAGS="-lelf -lz ${CURRENT_DIR}/libbpfgo/output/libbpf/libbpf.a" \
 	go build \
 		-tags core,ebpf \
 		-v \
