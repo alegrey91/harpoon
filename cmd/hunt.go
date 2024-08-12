@@ -20,7 +20,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/alegrey91/harpoon/internal/captor"
+	"github.com/alegrey91/harpoon/internal/ebpf/probesfacade/captor"
 	meta "github.com/alegrey91/harpoon/internal/metadata"
 	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
@@ -37,7 +37,7 @@ var huntCmd = &cobra.Command{
 	Short: "Hunt is like capture but gets a list of functions to be traced",
 	Long: `
 `,
-	Example: "  harpoon hunt --file .harpoon.yaml",
+	Example: "  harpoon hunt --file harpoon-report.yml",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		file, err := os.Open(harpoonFile)
 		if err != nil {
@@ -91,7 +91,7 @@ var huntCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(huntCmd)
 
-	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", ".harpoon.yaml", "File with the result of analysis")
+	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", "harpoon-report.yml", "File with the result of analysis")
 	huntCmd.MarkFlagRequired("file")
 
 	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")

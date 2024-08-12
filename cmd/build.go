@@ -96,9 +96,9 @@ var buildCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(buildCmd)
 
-	buildCmd.Flags().StringVarP(&inputDirectory, "directory", "D", "", "Directory containing harpoon's files")
+	buildCmd.Flags().StringVarP(&inputDirectory, "directory", "D", "", "Directory containing harpoon's metadata files")
 	buildCmd.MarkFlagRequired("directory")
 
-	buildCmd.Flags().BoolVarP(&saveProfile, "save-profile", "s", false, "Save profile to a file")
-	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "Save profile to a file")
+	buildCmd.Flags().BoolVarP(&saveProfile, "save", "S", false, "Save profile to a file")
+	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "Specify a name for the seccomp profile")
 }

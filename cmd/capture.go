@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alegrey91/harpoon/internal/captor"
+	"github.com/alegrey91/harpoon/internal/ebpf/probesfacade/captor"
 	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
 )
