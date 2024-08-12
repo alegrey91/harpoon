@@ -6,8 +6,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/alegrey91/seccomp-test-coverage/pkg/randomic"
 	"github.com/spf13/cobra"
+
+	"github.com/alegrey91/seccomp-test-coverage/pkg/randomic"
 )
 
 // coinCmd represents the coin command
