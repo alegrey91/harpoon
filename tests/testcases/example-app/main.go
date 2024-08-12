@@ -7,7 +7,9 @@ package main
 import (
 	"fmt"
 	"syscall"
+
 	libseccomp "github.com/seccomp/libseccomp-golang"
+
 	"github.com/alegrey91/seccomp-test-coverage/cmd"
 )
 
