@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/alegrey91/harpoon/internal/archiver"
-	seccomputils "github.com/alegrey91/harpoon/internal/seccomputils"
+	"github.com/alegrey91/harpoon/internal/seccomputils"
 )
 
 type WriteOptions struct {
