@@ -58,7 +58,9 @@ var buildCmd = &cobra.Command{
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				syscall := scanner.Text()
-				syscallList[string(syscall)]++
+				if seccomp.IsValidSyscall(syscall) {
+					syscallList[string(syscall)]++
+				}
 			}
 		}
 

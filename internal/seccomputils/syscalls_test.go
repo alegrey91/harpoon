@@ -1,4 +1,4 @@
-package syscalls
+package seccomputils
 
 import (
 	"bytes"
@@ -42,6 +42,39 @@ func TestPrint(t *testing.T) {
 			}
 			if gotWriter := writer.String(); gotWriter != tt.wantWriter {
 				t.Errorf("Print() = %v, want %v", gotWriter, tt.wantWriter)
+			}
+		})
+	}
+}
+
+func TestIsValidSyscall(t *testing.T) {
+	type args struct {
+		syscall string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "syscall is valid",
+			args: args{
+				syscall: "openat",
+			},
+			want: true,
+		},
+		{
+			name: "syscall is not valid",
+			args: args{
+				syscall: "openatx",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsValidSyscall(tt.args.syscall); got != tt.want {
+				t.Errorf("IsValidSyscall() = %v, want %v", got, tt.want)
 			}
 		})
 	}

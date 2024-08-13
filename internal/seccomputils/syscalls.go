@@ -1,4 +1,4 @@
-package syscalls
+package seccomputils
 
 import (
 	"fmt"
@@ -20,4 +20,11 @@ func Print(writer io.Writer, syscalls []uint32) error {
 		fmt.Fprintln(writer, syscall)
 	}
 	return nil
+}
+
+// IsValidSyscall returns true if a valid system call was passed to the function.
+// Returns false otherwise.
+func IsValidSyscall(syscall string) bool {
+	_, err := seccomp.GetSyscallFromName(syscall)
+	return err == nil
 }

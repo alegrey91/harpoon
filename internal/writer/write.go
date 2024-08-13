@@ -6,7 +6,7 @@ import (
 	"path"
 
 	"github.com/alegrey91/harpoon/internal/archiver"
-	syscallsw "github.com/alegrey91/harpoon/internal/syscallswriter"
+	seccomputils "github.com/alegrey91/harpoon/internal/seccomputils"
 )
 
 type WriteOptions struct {
@@ -32,10 +32,10 @@ func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 			return fmt.Errorf("error setting permissions to %s: %v", file.Name(), err)
 		}
 		// write to file
-		errOut = syscallsw.Print(file, syscalls)
+		errOut = seccomputils.Print(file, syscalls)
 	} else {
 		// write to stdout
-		errOut = syscallsw.Print(os.Stdout, syscalls)
+		errOut = seccomputils.Print(os.Stdout, syscalls)
 	}
 	if errOut != nil {
 		return fmt.Errorf("error printing out system calls: %v", errOut)
