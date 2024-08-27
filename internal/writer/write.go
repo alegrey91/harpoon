@@ -11,7 +11,7 @@ import (
 
 type WriteOptions struct {
 	Save      bool
-	Name      string
+	FileName      string
 	Directory string
 }
 
