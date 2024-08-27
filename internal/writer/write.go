@@ -11,13 +11,19 @@ import (
 
 type WriteOptions struct {
 	Save      bool
+	Name      string
 	Directory string
 }
 
 func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 	var errOut error
 	if opts.Save {
-		fileName := archiver.Convert(functionSymbol)
+		var fileName string
+		if opts.Name != "" {
+			fileName = opts.Name
+		} else {
+			fileName = archiver.Convert(functionSymbol)
+		}
 		err := os.MkdirAll(opts.Directory, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error creating directory: %v", err)
