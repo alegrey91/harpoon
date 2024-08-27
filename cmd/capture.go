@@ -77,7 +77,7 @@ func init() {
 	captureCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
 	captureCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
-	captureCmd.Flags().StringVarP(&name, "name", "n", "", "pecify a name for saved output")
+	captureCmd.Flags().StringVarP(&name, "name", "n", "", "Specify a name for saved output")
 	captureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Directory to use to store saved files")
 	captureCmd.MarkFlagsRequiredTogether("save", "directory")
 }
