@@ -29,7 +29,7 @@ var commandOutput bool
 var libbpfOutput bool
 var save bool
 var directory string
-var name string
+var filename string
 
 // captureCmd represents the create args
 var captureCmd = &cobra.Command{
