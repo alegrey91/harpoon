@@ -18,11 +18,9 @@ type WriteOptions struct {
 func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 	var errOut error
 	if opts.Save {
-		var fileName string
+		fileName := archiver.Convert(functionSymbol)
 		if opts.Name != "" {
 			fileName = opts.Name
-		} else {
-			fileName = archiver.Convert(functionSymbol)
 		}
 		err := os.MkdirAll(opts.Directory, os.ModePerm)
 		if err != nil {
