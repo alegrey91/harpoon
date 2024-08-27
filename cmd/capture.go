@@ -55,7 +55,7 @@ by passing the function name symbol and the binary args.
 
 			saveOpts := writer.WriteOptions{
 				Save:      save,
-				Name:      name,
+				FileName:      filename,
 				Directory: directory,
 			}
 			if err := writer.Write(syscalls, functionSymbols, saveOpts); err != nil {
