@@ -29,6 +29,7 @@ var commandOutput bool
 var libbpfOutput bool
 var save bool
 var directory string
+var filename string
 
 // captureCmd represents the create args
 var captureCmd = &cobra.Command{
@@ -54,6 +55,7 @@ by passing the function name symbol and the binary args.
 
 			saveOpts := writer.WriteOptions{
 				Save:      save,
+				FileName:  filename,
 				Directory: directory,
 			}
 			if err := writer.Write(syscalls, functionSymbols, saveOpts); err != nil {
@@ -75,6 +77,7 @@ func init() {
 	captureCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
 	captureCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
+	captureCmd.Flags().StringVarP(&filename, "name", "n", "", "Specify a name for saved output")
 	captureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Directory to use to store saved files")
 	captureCmd.MarkFlagsRequiredTogether("save", "directory")
 }

@@ -11,6 +11,7 @@ import (
 
 type WriteOptions struct {
 	Save      bool
+	FileName  string
 	Directory string
 }
 
@@ -18,6 +19,9 @@ func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 	var errOut error
 	if opts.Save {
 		fileName := archiver.Convert(functionSymbol)
+		if opts.FileName != "" {
+			fileName = opts.FileName
+		}
 		err := os.MkdirAll(opts.Directory, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error creating directory: %v", err)
