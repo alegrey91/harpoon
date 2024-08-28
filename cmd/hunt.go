@@ -72,7 +72,7 @@ var huntCmd = &cobra.Command{
 			for _, functionSymbol := range symbolsOrigins.Symbols {
 				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
 				if err != nil {
-					fmt.Printf("error capturing syscall: %w", err)
+					fmt.Printf("error capturing syscall: %v", err)
 				}
 
 				saveOpts := writer.WriteOptions{
@@ -95,6 +95,7 @@ func init() {
 	huntCmd.MarkFlagRequired("file")
 
 	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
+	huntCmd.Flags().BoolVarP(&commandError, "include-cmd-error", "e", false, "Include the executed command error")
 
 	huntCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
