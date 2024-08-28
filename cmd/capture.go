@@ -26,6 +26,7 @@ import (
 
 var functionSymbols string
 var commandOutput bool
+var commandError bool
 var libbpfOutput bool
 var save bool
 var directory string
@@ -50,7 +51,7 @@ by passing the function name symbol and the binary args.
 		for _, functionSymbol := range functionSymbolList {
 			syscalls, err := captor.Capture(functionSymbol, args, captureOpts)
 			if err != nil {
-				fmt.Printf("error capturing syscall: %w", err)
+				fmt.Printf("error capturing syscall: %v", err)
 			}
 
 			saveOpts := writer.WriteOptions{
@@ -73,6 +74,7 @@ func init() {
 	captureCmd.MarkFlagRequired("functions")
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
+	captureCmd.Flags().BoolVarP(&commandError, "include-cmd-error", "e", false, "Include the executed command error")
 
 	captureCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
