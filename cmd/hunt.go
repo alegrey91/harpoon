@@ -94,8 +94,8 @@ func init() {
 	huntCmd.Flags().StringVarP(&harpoonFile, "file", "F", "harpoon-report.yml", "File with the result of analysis")
 	huntCmd.MarkFlagRequired("file")
 
-	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-output", "c", false, "Include the executed command output")
-	huntCmd.Flags().BoolVarP(&commandError, "include-cmd-errors", "e", false, "Include the executed command error")
+	huntCmd.Flags().BoolVarP(&commandOutput, "include-cmd-stdout", "c", false, "Include the executed command output")
+	huntCmd.Flags().BoolVarP(&commandError, "include-cmd-stderr", "e", false, "Include the executed command error")
 
 	huntCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
