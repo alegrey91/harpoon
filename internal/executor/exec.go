@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bufio"
 	"fmt"
 	"os/exec"
 	"sync"
@@ -8,20 +9,42 @@ import (
 
 // Run execute the command and wait for its end.
 // The cmdOutput argument is used to print the command output.
-func Run(cmd []string, cmdOutput bool, wg *sync.WaitGroup) {
+func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, errorCh chan<- string) {
 	defer func() {
 		wg.Done()
 	}()
 
 	command := exec.Command(cmd[0], cmd[1:]...)
-	output, _ := command.CombinedOutput()
-	if cmdOutput {
-		fmt.Println("----- BEGIN OF COMMAND OUTPUT -----")
-		fmt.Printf("%s", output)
-		fmt.Println("------ END OF COMMAND OUTPUT ------")
-	}
+	stdout, _ := command.StdoutPipe()
+	stderr, _ := command.StderrPipe()
+
+	//command.Wait()
+	command.Start()
+
+	go func() {
+		if cmdOutput {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				outputCh <- scanner.Text()
+			}
+			if err := scanner.Err(); err != nil {
+				outputCh <- fmt.Sprintf("error: %v", err)
+			}
+		}
+		if cmdError {
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				errorCh <- scanner.Text()
+			}
+			if err := scanner.Err(); err != nil {
+				errorCh <- fmt.Sprintf("error: %v", err)
+			}
+		}
+	}()
 
 	command.Wait()
+	close(outputCh)
+	close(errorCh)
 }
 
 func Build(packagePath, outputFile string) (string, error) {

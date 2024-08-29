@@ -31,6 +31,7 @@ type event struct {
 
 type CaptureOptions struct {
 	CommandOutput bool
+	CommandError  bool
 	LibbpfOutput  bool
 }
 
@@ -114,7 +115,9 @@ func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]ui
 	// run args that we want to trace
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go executor.Run(cmdArgs, opts.CommandOutput, &wg)
+	outputCh := make(chan string)
+	errorCh := make(chan string)
+	go executor.Run(cmdArgs, opts.CommandOutput, opts.CommandError, &wg, outputCh, errorCh)
 
 	var syscalls []uint32
 	go func() {
@@ -131,6 +134,16 @@ func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]ui
 			case lost := <-lostChannel:
 				fmt.Fprintf(os.Stderr, "lost %d data\n", lost)
 				return
+			case line, ok := <-outputCh:
+				if !ok {
+					break
+				}
+				fmt.Println(line)
+			case err, ok := <-errorCh:
+				if !ok {
+					break
+				}
+				fmt.Println(err)
 			}
 		}
 	}()
