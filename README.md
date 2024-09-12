@@ -56,7 +56,15 @@ curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo 
 
 ### Build
 
-Or you can build `harpoon` manually by using the following command:
+Or you can build `harpoon` manually by using the following steps:
+
+Install dependencies (for Ubuntu):
+
+* `clang`
+* `libbpf-dev`
+* `libseccomp-dev`
+
+Build the application:
 
 ```sh
 make build
