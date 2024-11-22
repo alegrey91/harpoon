@@ -6,6 +6,8 @@
 
 **Harpoon** aims to capture the syscalls (as if they were fishes) from the execution flow (the river) of a single user-defined function.
 
+[![Awesome eBPF](https://awesome.re/badge.svg)](https://github.com/zoidyzoidzoid/awesome-ebpf?tab=readme-ov-file#security)
+
 ## Introduction
 
 This tool is designed to provide fine-grained visibility into the syscalls made by specific functions within a program. Unlike traditional system call tracing tools like `strace`, which capture all syscalls made during the entire program's execution, this project leverages the power of **eBPF** to pinpoint and monitor system calls exclusively within targeted functions.
@@ -40,7 +42,9 @@ getrlimit
 
 These are the syscalls that have been executed by the traced function!
 
-**N.B.** For a complete list of available commands, take a look [here](docs/commands.md).
+For a complete list of available commands, take a look [here](docs/commands.md).
+
+For tutorials, look [here](docs/tutorials.md).
 
 ## Installation
 
