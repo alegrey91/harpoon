@@ -83,6 +83,7 @@ In case you want to run the application locally, I've provided the [`.vscode/lau
 ## Talks
 
 I had the pleasure of speaking about `harpoon` at the following conferences:
+* [**GOLAB**](https://golab.io/talks/test-driven-hardening-crafting-seccomp-profiles-within-test-pipeline)
 * [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/)
 * [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM)
 
