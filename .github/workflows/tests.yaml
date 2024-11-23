@@ -47,6 +47,13 @@ jobs:
           name: unit-test
           path: /tmp/unit/
 
+      - name: Golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.0
+        continue-on-error: true
+        with:
+          # TODO: find a way to pass this the same way we pass it to go test
+          args: --issues-exit-code 0 internal/analyzer internal/archiver internal/elfreader internal/embeddable internal/executor internal/metadata internal/privileged internal/seccomputils internal/writer
+
   integration-test:
 
     runs-on: ubuntu-latest
@@ -76,7 +83,7 @@ jobs:
           mkdir -p /tmp/integration
           # we have to run integration tests one-by-one
           # otherwhise they will run in parallel.
-          # since harpoon apply network forwards, these could 
+          # since harpoon apply network forwards, these could
           # interact with each other and make the test fail.
           go test \
             -exec sudo \
