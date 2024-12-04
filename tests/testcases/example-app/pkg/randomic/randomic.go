@@ -45,3 +45,10 @@ func DoSomethingSpecial(value int) bool {
 	syscall.Gettid()
 	return true
 }
+
+func DoForAWhile() {
+	for {
+		fmt.Println("hello!")
+		time.Sleep(2*time.Second)
+	}
+}

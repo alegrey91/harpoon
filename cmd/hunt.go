@@ -67,18 +67,20 @@ var huntCmd = &cobra.Command{
 			opts := captor.CaptureOptions{
 				CommandOutput: commandOutput,
 				LibbpfOutput:  libbpfOutput,
+				Interval:      0,
+			}
+
+			saveOpts := writer.WriteOptions{
+				Save:      save,
+				Directory: directory,
 			}
 
 			for _, functionSymbol := range symbolsOrigins.Symbols {
-				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
+				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts, nil)
 				if err != nil {
 					fmt.Printf("error capturing syscall: %v", err)
 				}
 
-				saveOpts := writer.WriteOptions{
-					Save:      save,
-					Directory: directory,
-				}
 				if err = writer.Write(syscalls, functionSymbol, saveOpts); err != nil {
 					return fmt.Errorf("error writing seccomp profile: %w", err)
 				}

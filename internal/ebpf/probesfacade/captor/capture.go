@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 	"unsafe"
 
 	probes "github.com/alegrey91/harpoon/internal/ebpf/probesfacade"
@@ -33,9 +34,10 @@ type CaptureOptions struct {
 	CommandOutput bool
 	CommandError  bool
 	LibbpfOutput  bool
+	Interval      int
 }
 
-func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]uint32, error) {
+func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions, collectedSyscalls chan []uint32) ([]uint32, error) {
 	if !opts.LibbpfOutput {
 		// suppress libbpf log ouput
 		bpf.SetLoggerCbs(
@@ -117,7 +119,27 @@ func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]ui
 	wg.Add(1)
 	outputCh := make(chan string)
 	errorCh := make(chan string)
-	go executor.Run(cmdArgs, opts.CommandOutput, opts.CommandError, &wg, outputCh, errorCh)
+
+	var ticker *time.Ticker
+	var interval time.Duration
+	if opts.Interval > 0 {
+		interval = time.Duration(opts.Interval) * time.Second
+	} else {
+		// wait what? ~114 years of interval?
+		// yes, so that the ticker will never be triggered.
+		// the value looks reasonably good.
+		interval = time.Duration(1000000) * time.Hour
+	}
+	ticker = time.NewTicker(interval)
+	defer ticker.Stop()
+
+	go executor.Run(cmdArgs,
+		opts.CommandOutput,
+		opts.CommandError,
+		&wg,
+		outputCh,
+		errorCh,
+	)
 
 	var syscalls []uint32
 	go func() {
@@ -131,6 +153,10 @@ func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]ui
 					return
 				}
 				syscalls = append(syscalls, e.SyscallID)
+			case <-ticker.C:
+				// used to send incremental result
+				// every interval of time.
+				collectedSyscalls <- syscalls
 			case lost := <-lostChannel:
 				fmt.Fprintf(os.Stderr, "lost %d data\n", lost)
 				return
