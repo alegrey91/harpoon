@@ -40,7 +40,9 @@ var analyzeCmd = &cobra.Command{
 	Short: "Analyze infers the symbols of functions that are tested by unit-tests",
 	Long: `
 `,
-	Example: "  harpoon analyze --exclude vendor/",
+	Example:       "  harpoon analyze --exclude vendor/",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if exclude != "" {
 			excludedPaths = strings.Split(exclude, ",")
