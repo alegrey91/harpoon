@@ -78,6 +78,16 @@ getrlimit
 
 So the listed syscalls are the ones executed by the process during its run.
 
+## Tracing a program that doesn't stop
+
+`harpoon` allows you trace a program that doesn't stop (eg. a web server).
+
+To do so, you have the `--dump-interval/-i` flag available. This flag gives you the ability to dump the collected syscalls every interval of time.
+
+```sh
+harpoon capture -f main.main --dump-interval 2 -- ./binary_name
+```
+
 ## Tracing from unit-tests
 
 `harpoon` has additional commands other than `capture`. The commands are `analyze` and `hunt`.
