@@ -1,6 +1,8 @@
 package archiver
 
-import "strings"
+import (
+	"strings"
+)
 
 func Convert(name string) string {
 	name = strings.Replace(name, "/", "_", -1)

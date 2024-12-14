@@ -22,18 +22,22 @@ func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 		if opts.FileName != "" {
 			fileName = opts.FileName
 		}
+		if fileName == "" {
+			return fmt.Errorf("file name is empty")
+		}
 		err := os.MkdirAll(opts.Directory, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("error creating directory: %v", err)
 		}
-		file, err := os.Create(path.Join(opts.Directory, fileName))
+		path := path.Join(opts.Directory, fileName)
+		file, err := os.Create(path)
 		if err != nil {
-			return fmt.Errorf("error creating file %s: %v", file.Name(), err)
+			return fmt.Errorf("error creating file %s: %v", path, err)
 		}
 		defer file.Close()
 
 		if err := file.Chmod(0744); err != nil {
-			return fmt.Errorf("error setting permissions to %s: %v", file.Name(), err)
+			return fmt.Errorf("error setting permissions to %s: %v", path, err)
 		}
 		// write to file
 		errOut = seccomputils.Print(file, syscalls)
