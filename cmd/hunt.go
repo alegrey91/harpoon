@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -25,7 +24,7 @@ import (
 	meta "github.com/alegrey91/harpoon/internal/metadata"
 	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (
@@ -38,9 +37,7 @@ var huntCmd = &cobra.Command{
 	Short: "Hunt is like capture but gets a list of functions to be traced",
 	Long: `
 `,
-	Example:       "  harpoon hunt --file harpoon-report.yml",
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Example: "  harpoon hunt --file harpoon-report.yml",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		file, err := os.Open(harpoonFile)
 		if err != nil {
@@ -70,51 +67,20 @@ var huntCmd = &cobra.Command{
 			opts := captor.CaptureOptions{
 				CommandOutput: commandOutput,
 				LibbpfOutput:  libbpfOutput,
-				Interval:      0,
-			}
-
-			saveOpts := writer.WriteOptions{
-				Save:      save,
-				Directory: directory,
 			}
 
 			for _, functionSymbol := range symbolsOrigins.Symbols {
-				fmt.Printf("[%s]\n", functionSymbol)
-				resultCh := make(chan []uint32)
-				errorCh := make(chan error)
-				ctx := context.Background()
-
-				ebpf, err := captor.InitProbes(functionSymbol, captureArgs, opts)
+				syscalls, err := captor.Capture(functionSymbol, captureArgs, opts)
 				if err != nil {
-					return fmt.Errorf("error setting up ebpf module: %w", err)
+					fmt.Printf("error capturing syscall: %v", err)
 				}
-				defer ebpf.Close()
 
-				// this will get incremental results
-				go func() {
-					ebpf.Capture(ctx, resultCh, errorCh)
-				}()
-
-				for {
-					select {
-					case syscalls := <-resultCh:
-						if err := writer.Write(syscalls, functionSymbol, saveOpts); err != nil {
-							return fmt.Errorf("error writing syscalls for symbol %s: %w", functionSymbol, err)
-						}
-					case err := <-errorCh:
-						if err != nil {
-							return fmt.Errorf("error capturing: %w", err)
-						}
-						return nil
-					case <-ctx.Done():
-						close(resultCh)
-						close(errorCh)
-						return nil
-					}
-					// at the end of each selection
-					// we break the loop to continue
-					// the hunting.
-					break
+				saveOpts := writer.WriteOptions{
+					Save:      save,
+					Directory: directory,
+				}
+				if err = writer.Write(syscalls, functionSymbol, saveOpts); err != nil {
+					return fmt.Errorf("error writing seccomp profile: %w", err)
 				}
 			}
 		}
@@ -134,6 +100,6 @@ func init() {
 	huntCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
 	huntCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
-	huntCmd.Flags().StringVarP(&directory, "directory", "D", "", "Store saved files in a directory")
+	huntCmd.Flags().StringVarP(&directory, "directory", "D", "", "Directory to use to store saved files")
 	huntCmd.MarkFlagsRequiredTogether("save", "directory")
 }

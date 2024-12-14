@@ -2,12 +2,11 @@ package captor
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
-	"time"
 	"unsafe"
 
 	probes "github.com/alegrey91/harpoon/internal/ebpf/probesfacade"
@@ -34,23 +33,9 @@ type CaptureOptions struct {
 	CommandOutput bool
 	CommandError  bool
 	LibbpfOutput  bool
-	Interval      int
 }
 
-type ebpfSetup struct {
-	mod      *bpf.Module
-	link     *bpf.BPFLink
-	pb       *bpf.PerfBuffer
-	eventsCh chan []byte
-	lostCh   chan uint64
-	opts     CaptureOptions
-	cmd      []string
-}
-
-// InitProbes setup the ebpf module attaching probes and tracepoints
-// to the ebpf program.
-// Returns the ebpfSetup struct in case of seccess, an error in case of failure.
-func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*ebpfSetup, error) {
+func Capture(functionSymbol string, cmdArgs []string, opts CaptureOptions) ([]uint32, error) {
 	if !opts.LibbpfOutput {
 		// suppress libbpf log ouput
 		bpf.SetLoggerCbs(
@@ -67,6 +52,7 @@ func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*
 	if err != nil {
 		return nil, fmt.Errorf("error loading BPF object file: %v", err)
 	}
+	defer bpfModule.Close()
 
 	/*
 		HashMap used for passing various configuration
@@ -104,6 +90,7 @@ func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*
 	if err != nil {
 		return nil, fmt.Errorf("error attaching tracepoint at event (%s:%s): %v", tracepointCategory, tracepointName, err)
 	}
+	defer traceLink.Destroy()
 
 	/*
 		Sending input argument to BPF program
@@ -120,109 +107,51 @@ func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*
 	// init perf buffer
 	eventsChannel := make(chan []byte)
 	lostChannel := make(chan uint64)
-	pb, err := bpfModule.InitPerfBuf(bpfEventsMap, eventsChannel, lostChannel, 1)
+	rb, err := bpfModule.InitPerfBuf(bpfEventsMap, eventsChannel, lostChannel, 1)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing map (%s) with PerfBuffer: %v", bpfEventsMap, err)
 	}
 
-	return &ebpfSetup{
-		mod:      bpfModule,
-		link:     traceLink,
-		pb:       pb,
-		eventsCh: eventsChannel,
-		lostCh:   lostChannel,
-		opts:     opts,
-		cmd:      cmdArgs,
-	}, nil
-}
-
-// Close closes the ebpf link and module.
-func (ebpf *ebpfSetup) Close() {
-	ebpf.link.Destroy()
-	ebpf.mod.Close()
-}
-
-// Capture collects syscalls from the executed command.
-// Returns values through the given channels.
-func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, errorCh chan error) {
-	// setting up ticker to dump results
-	// every interval of time.
-	var ticker *time.Ticker
-	var interval time.Duration
-	if ebpf.opts.Interval > 0 {
-		interval = time.Duration(ebpf.opts.Interval) * time.Second
-	} else {
-		// wait what? ~114 years of interval?
-		// yes, so that the ticker will never be triggered.
-		// the value looks reasonably good.
-		interval = time.Duration(1000000) * time.Hour
-	}
-	ticker = time.NewTicker(interval)
-	defer ticker.Stop()
-
+	// run args that we want to trace
 	var wg sync.WaitGroup
 	wg.Add(1)
-	cmdStdoutCh := make(chan string)
-	cmdStderrCh := make(chan string)
-	// running command to trace its syscalls
-	go executor.Run(
-		ebpf.cmd,
-		ebpf.opts.CommandOutput,
-		ebpf.opts.CommandError,
-		&wg,
-		cmdStdoutCh,
-		cmdStderrCh,
-	)
+	outputCh := make(chan string)
+	errorCh := make(chan string)
+	go executor.Run(cmdArgs, opts.CommandOutput, opts.CommandError, &wg, outputCh, errorCh)
 
 	var syscalls []uint32
 	go func() {
 		for {
 			select {
-			case data := <-ebpf.eventsCh:
+			case data := <-eventsChannel:
 				var e event
 				err := binary.Read(bytes.NewBuffer(data), binary.LittleEndian, &e)
 				if err != nil {
-					//fmt.Fprintf(os.Stderr, "error reading event: %v\n", err)
-					// will be left empty for now.
+					fmt.Fprintf(os.Stderr, "error reading event: %v\n", err)
 					return
 				}
 				syscalls = append(syscalls, e.SyscallID)
-			case <-ticker.C:
-				// used to send incremental result
-				// every interval of time.
-				resultCh <- syscalls
-				// we clear the slice after sending data
-				// to the channel, so on the next iteration
-				// this will have only the most recent values.
-				syscalls = nil
-			case _ = <-ebpf.lostCh:
-				// managing errors from libbpf
-				// will be left empty for now.
-				//fmt.Fprintf(os.Stderr, "lost %d data\n", lost)
+			case lost := <-lostChannel:
+				fmt.Fprintf(os.Stderr, "lost %d data\n", lost)
 				return
-			case line, ok := <-cmdStdoutCh:
-				// managing stdout from executed command
+			case line, ok := <-outputCh:
 				if !ok {
 					break
 				}
-				fmt.Println("stdout:", line)
-			case err, ok := <-cmdStderrCh:
-				// managing stderr from executed command
+				fmt.Println(line)
+			case err, ok := <-errorCh:
 				if !ok {
 					break
 				}
-				fmt.Println("stderr:", err)
+				fmt.Println(err)
 			}
 		}
 	}()
 
-	ebpf.pb.Poll(300)
+	rb.Poll(300)
 	// wait for args completion
 	wg.Wait()
-	ebpf.pb.Stop()
+	rb.Stop()
 
-	// sending last remained syscalls
-	// and close the channel.
-	resultCh <- syscalls
-	<-ctx.Done()
+	return syscalls, nil
 }

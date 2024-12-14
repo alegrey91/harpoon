@@ -11,28 +11,10 @@
             "console": "integratedTerminal",
             "args": ["capture", 
                 "-f", 
-                "main.main", 
-                "-i",
-                "1",
-                "--",
-                "./test/testcases/example-app/bin/example-app",
-                "coin"
+                "<function_list,...>", 
+                "/path/to/command",
+                "args"
             ]
-        },
-        {
-            "name": "Run hunt as root",
-            "type": "go",
-            "request": "launch",
-            "mode": "exec",
-            "program": "${workspaceFolder}/bin/harpoon",
-            "cwd": "./tests/testcases/example-app/",
-            "asRoot": true,
-            "console": "integratedTerminal",
-            "args": ["hunt", 
-                "-F", 
-                "harpoon-report.yml", 
-                "-c"
-			]
         }
     ]
 }

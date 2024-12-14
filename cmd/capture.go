@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -32,7 +31,6 @@ var libbpfOutput bool
 var save bool
 var directory string
 var filename string
-var dumpInterval int
 
 // captureCmd represents the create args
 var captureCmd = &cobra.Command{
@@ -41,57 +39,28 @@ var captureCmd = &cobra.Command{
 	Long: `Capture gives you the ability of tracing system calls
 by passing the function name symbol and the binary args.
 `,
-	Example:       "  harpoon -f main.doSomething -- ./command arg1 arg2 ...",
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Example: "  harpoon -f main.doSomething ./command arg1 arg2 ...",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		functionSymbolList := strings.Split(functionSymbols, ",")
 
-		opts := captor.CaptureOptions{
+		captureOpts := captor.CaptureOptions{
 			CommandOutput: commandOutput,
 			LibbpfOutput:  libbpfOutput,
-			Interval:      dumpInterval,
 		}
-
-		saveOpts := writer.WriteOptions{
-			Save:      save,
-			FileName:  filename,
-			Directory: directory,
-		}
-
 		for _, functionSymbol := range functionSymbolList {
-			resultCh := make(chan []uint32)
-			errorCh := make(chan error)
-			ctx := context.Background()
-
-			ebpf, err := captor.InitProbes(functionSymbol, args, opts)
+			syscalls, err := captor.Capture(functionSymbol, args, captureOpts)
 			if err != nil {
-				return fmt.Errorf("error setting up ebpf module: %w", err)
+				fmt.Printf("error capturing syscall: %v", err)
 			}
-			defer ebpf.Close()
 
-			// this will get incremental results
-			go func() {
-				ebpf.Capture(ctx, resultCh, errorCh)
-			}()
-
-			for {
-				select {
-				case syscalls := <-resultCh:
-					if err := writer.Write(syscalls, functionSymbol, saveOpts); err != nil {
-						return fmt.Errorf("error writing syscalls for symbol %s: %w", functionSymbol, err)
-					}
-				case err := <-errorCh:
-					if err != nil {
-						return fmt.Errorf("error: %w", err)
-					}
-					return nil
-				case <-ctx.Done():
-					close(resultCh)
-					close(errorCh)
-					return nil
-				}
+			saveOpts := writer.WriteOptions{
+				Save:      save,
+				FileName:  filename,
+				Directory: directory,
+			}
+			if err := writer.Write(syscalls, functionSymbols, saveOpts); err != nil {
+				return fmt.Errorf("error writing syscalls for symbol %s: %w", functionSymbol, err)
 			}
 		}
 		return nil
@@ -106,11 +75,11 @@ func init() {
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-stdout", "c", false, "Include the executed command output")
 	captureCmd.Flags().BoolVarP(&commandError, "include-cmd-stderr", "e", false, "Include the executed command error")
+
 	captureCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
 	captureCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
 	captureCmd.Flags().StringVarP(&filename, "name", "n", "", "Specify a name for saved output")
-	captureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Store saved files in a directory")
-	captureCmd.Flags().IntVarP(&dumpInterval, "dump-interval", "i", 0, "Dump results every interval of time")
+	captureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Directory to use to store saved files")
 	captureCmd.MarkFlagsRequiredTogether("save", "directory")
 }

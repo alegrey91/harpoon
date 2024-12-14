@@ -74,7 +74,7 @@ create-output-dir:
 	mkdir -p ${OUTPUT_DIR}
 
 install:
-	cp ${BINARY_DIR}/${BINARY_NAME} /usr/sbin/
+	cp ${BINARY_DIR}/${BINARY_NAME} /usr/local/bin/
 
 clean:
 	rm -rf ${OUTPUT_DIR}

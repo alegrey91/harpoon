@@ -25,10 +25,8 @@ var Version = "test"
 
 // captureCmd represents the create args
 var versionCmd = &cobra.Command{
-	Use:           "version",
-	Short:         "Version of the tool.",
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Use:   "version",
+	Short: "Version of the tool.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(Version)
 	},

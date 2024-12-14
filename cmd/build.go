@@ -38,9 +38,7 @@ var buildCmd = &cobra.Command{
 	Short: "build collects system calls from harpoon generated files and create a Seccomp profile with them",
 	Long: `
 `,
-	Example:       "  harpoon build",
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Example: "  harpoon build",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		files, err := os.ReadDir(inputDirectory)
 		if err != nil {
