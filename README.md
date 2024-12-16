@@ -78,12 +78,12 @@ After the build is completed, you can find the executable under the `bin/` direc
 
 ## Debugging
 
-In case you want to run the application locally, I've provided the [`.vscode/launch.json`](.vscode/launch.json) file to easily debug the application with `root` privileges in `vscode`. Just replace the parameters marked with `<>`.
+In case you want to run the application locally, I've provided the [`.vscode/launch.json`](.vscode/launch.json) file to easily debug the application with `root` privileges in `vscode`.
 
 ## Talks
 
 I had the pleasure of speaking about `harpoon` at the following conferences:
-* [**GOLAB**](https://golab.io/talks/test-driven-hardening-crafting-seccomp-profiles-within-test-pipeline)
+* [**GOLAB**](https://www.youtube.com/watch?v=A5A_Ll9o1Rc)
 * [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/)
 * [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM)
 
