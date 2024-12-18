@@ -117,7 +117,7 @@ jobs:
             covdata \
             textfmt \
             -i=/tmp/unit-test,/tmp/integration-test \
-            -o code-coverage
+            -o=code-coverage
           go tool \
             cover \
             -func code-coverage
