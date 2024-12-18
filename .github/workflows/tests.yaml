@@ -116,7 +116,6 @@ jobs:
         run: |2
           go tool \
             covdata \
-
             textfmt \
             -i=/tmp/unit-test,/tmp/integration-test \
 
