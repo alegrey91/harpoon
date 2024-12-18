@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # ratchet:actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # ratchet:actions/setup-go@v2
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
         with:
           go-version: '1.21.7'
       - name: Install BCC Dependencies
@@ -23,7 +23,7 @@ jobs:
         run: |
           make build-gh
       - name: Upload Artifact
-        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # ratchet:actions/upload-artifact@v2
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # ratchet:actions/upload-artifact@v4
         with:
           name: harpoon
           path: bin/harpoon
@@ -32,13 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@cbed621e49e4c01b044d60f6c80ea4ed6328b281 # ratchet:actions/download-artifact@v2
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
         with:
           name: harpoon
           path: ./
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # ratchet:softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # ratchet:softprops/action-gh-release@v2
         with:
           files: |
             harpoon
