@@ -15,7 +15,7 @@ RUN apt-get update && \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Download and run the installation script
+# Copy the required file to build the application
 COPY cmd/ cmd/
 COPY ebpf/ ebpf/
 COPY internal/ internal/
