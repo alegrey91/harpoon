@@ -67,6 +67,9 @@ endif
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
+build-docker:
+	docker build --no-cache -t harpoon:latest .
+
 create-bin-dir:
 	mkdir -p ${BINARY_DIR}
 
