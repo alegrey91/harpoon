@@ -71,6 +71,10 @@ jobs:
           make build-bpf
           make build-go-cover && sudo make -B install
 
+      - name: Build test application
+        run: |
+          make build -C tests/testcases/example-app/
+
       - name: Run integration test
         run: |
           mkdir -p /tmp/integration

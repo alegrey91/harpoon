@@ -25,6 +25,54 @@ exec harpoon build -D harpoon/ -S --name profile.json
 exists profile.json
 cmp profile.json expected-profile.json
 
+# test harpoon capture command
+exec harpoon capture -h
+stdout 'Usage:'
+
+# setting up test application
+exists bin/example-app
+# this must be done within the testscript environment
+exec chmod +x bin/example-app
+exec ls -la bin/example-app
+exec bin/example-app coin
+
+exec harpoon capture -f main.main -c -- ./bin/example-app coin
+stdout 'stdout: \[flip coin\]'
+
+exec harpoon capture -f main.main -- ./bin/example-app coin
+stdout 'write'
+
+exec harpoon capture -f main.main -l -- ./bin/example-app coin
+stderr 'libbpf: license of ebpf.o is GPL'
+
+exec harpoon capture -f main.main -i 2 -- ./bin/example-app ten
+stdout 'write'
+stdout 'nanosleep'
+
+exec harpoon capture -f main.main -i 2 -c -- ./bin/example-app ten
+stdout 'write'
+stdout 'nanosleep'
+stdout 'stdout: hello!'
+
+exec harpoon capture -f main.main -i 2 -S -D /tmp/test-ten -- ./bin/example-app ten
+exists /tmp/test-ten/main_main
+grep 'write' /tmp/test-ten/main_main
+grep 'nanosleep' /tmp/test-ten/main_main
+
+exec harpoon capture -f main.main -c -i 2 -S -D /tmp/test-ten -- ./bin/example-app ten
+stdout -count=10 'stdout: hello!'
+exists /tmp/test-ten/main_main
+grep 'write' /tmp/test-ten/main_main
+grep 'nanosleep' /tmp/test-ten/main_main
+
+exec harpoon capture -f main.main -c -i 2 -S -D /tmp/test-infinite -- ./bin/example-app infinite &infinite&
+exec sleep 5
+kill -KILL infinite
+# wait infinite
+exists /tmp/test-infinite/main_main
+grep 'write' /tmp/test-infinite/main_main
+grep 'nanosleep' /tmp/test-infinite/main_main
+
 -- testcases/example-app/harpoon-expected-report.yml --
 ---
 symbolsOrigins:
