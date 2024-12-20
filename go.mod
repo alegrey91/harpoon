@@ -1,8 +1,8 @@
 module github.com/alegrey91/harpoon
 
-go 1.21
+go 1.22
 
-toolchain go1.21.7
+toolchain go1.23.2
 
 require (
 	github.com/aquasecurity/libbpfgo v0.6.0-libbpf-1.3.0.20240111220235-90dbffffbdab
@@ -14,12 +14,12 @@ require (
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/tools v0.22.0 // indirect
 )
 
 require (
-	github.com/rogpeppe/go-internal v1.12.0
+	github.com/rogpeppe/go-internal v1.13.1
 	github.com/spf13/cobra v1.8.0
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
