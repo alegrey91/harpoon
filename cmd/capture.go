@@ -87,10 +87,6 @@ by passing the function name symbol and the binary args.
 						return fmt.Errorf("error: %w", err)
 					}
 					return nil
-				case <-ctx.Done():
-					close(resultCh)
-					close(errorCh)
-					return nil
 				}
 			}
 		}

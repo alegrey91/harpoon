@@ -106,10 +106,6 @@ var huntCmd = &cobra.Command{
 							return fmt.Errorf("error capturing: %w", err)
 						}
 						return nil
-					case <-ctx.Done():
-						close(resultCh)
-						close(errorCh)
-						return nil
 					}
 					// at the end of each selection
 					// we break the loop to continue
