@@ -144,6 +144,7 @@ func (ebpf *ebpfSetup) Close() {
 
 // Capture collects syscalls from the executed command.
 // Returns values through the given channels.
+// When the interval is 0, automatically closes the channels.
 func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, errorCh chan error) {
 	// setting up ticker to dump results
 	// every interval of time.
@@ -224,5 +225,6 @@ func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, erro
 	// sending last remained syscalls
 	// and close the channel.
 	resultCh <- syscalls
-	<-ctx.Done()
+	close(resultCh)
+	close(errorCh)
 }
