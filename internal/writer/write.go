@@ -30,7 +30,7 @@ func Write(syscalls []uint32, functionSymbol string, opts WriteOptions) error {
 			return fmt.Errorf("error creating directory: %v", err)
 		}
 		path := path.Join(opts.Directory, fileName)
-		file, err := os.Create(path)
+		file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return fmt.Errorf("error creating file %s: %v", path, err)
 		}
