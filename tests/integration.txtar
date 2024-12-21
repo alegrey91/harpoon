@@ -6,12 +6,6 @@
 # move on the testcases directory
 cd testcases/example-app/
 
-# test it doesn't panic when the file is not executable
-exec chmod -x bin/example-app
-exec harpoon capture -e -c -f main.main -- ./bin/example-app
-stdout 'command execution error: fork/exec .* permission denied'
-exec chmod +x bin/example-app
-
 # test usage
 exec harpoon analyze -h
 stdout 'Usage:'
@@ -34,6 +28,12 @@ cmp profile.json expected-profile.json
 # test harpoon capture command
 exec harpoon capture -h
 stdout 'Usage:'
+
+# test it doesn't panic when the file is not executable
+exec chmod -x bin/example-app
+exec harpoon capture -e -c -f main.main -- ./bin/example-app
+stdout 'command execution error: fork/exec .* permission denied'
+exec chmod +x bin/example-app
 
 # setting up test application
 exists bin/example-app
