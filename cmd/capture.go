@@ -50,6 +50,7 @@ by passing the function name symbol and the binary args.
 
 		opts := captor.CaptureOptions{
 			CommandOutput: commandOutput,
+			CommandError:  commandError,
 			LibbpfOutput:  libbpfOutput,
 			Interval:      dumpInterval,
 		}
