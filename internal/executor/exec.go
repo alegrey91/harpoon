@@ -51,7 +51,7 @@ func Build(packagePath, outputFile string) (string, error) {
 	cmd := exec.Command(
 		"go",
 		"test",
-		"-gcflags=-N -l",  // disable optimization
+		`-gcflags="-N -l"`,  // disable optimization
 		"-c", packagePath, // build test binary
 		"-o", outputFile, // save it in a dedicated directory
 	)
