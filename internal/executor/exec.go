@@ -3,6 +3,7 @@ package executor
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 )
@@ -11,6 +12,8 @@ import (
 // The cmdOutput argument is used to print the command output.
 func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, errorCh chan<- string) {
 	defer func() {
+		close(outputCh)
+		close(errorCh)
 		wg.Done()
 	}()
 
@@ -18,8 +21,10 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 	stdout, _ := command.StdoutPipe()
 	stderr, _ := command.StderrPipe()
 
-	//command.Wait()
-	command.Start()
+	if err := command.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "command execution error: %v\n", err)
+		return
+	}
 
 	go func() {
 		if cmdOutput {
@@ -43,8 +48,6 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 	}()
 
 	command.Wait()
-	close(outputCh)
-	close(errorCh)
 }
 
 func Build(packagePath, outputFile string) (string, error) {
