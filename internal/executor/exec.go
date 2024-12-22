@@ -3,6 +3,7 @@ package executor
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 )
@@ -21,7 +22,7 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 	stderr, _ := command.StderrPipe()
 
 	if err := command.Start(); err != nil {
-		fmt.Printf("command execution error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "command execution error: %v\n", err)
 		return
 	}
 
