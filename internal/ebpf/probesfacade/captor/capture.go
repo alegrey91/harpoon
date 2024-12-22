@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -51,6 +52,10 @@ type ebpfSetup struct {
 // to the ebpf program.
 // Returns the ebpfSetup struct in case of seccess, an error in case of failure.
 func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*ebpfSetup, error) {
+	if len(cmdArgs) == 0 {
+		return nil, errors.New("error no arguments provided, at least 1 argument is required")
+	}
+
 	if !opts.LibbpfOutput {
 		// suppress libbpf log ouput
 		bpf.SetLoggerCbs(
