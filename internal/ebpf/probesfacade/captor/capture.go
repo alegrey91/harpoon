@@ -220,6 +220,8 @@ func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, erro
 	ebpf.pb.Poll(300)
 	// wait for args completion
 	wg.Wait()
+	close(cmdStdoutCh)
+	close(cmdStderrCh)
 	ebpf.pb.Stop()
 
 	// sending last remained syscalls
