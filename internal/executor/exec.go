@@ -12,8 +12,6 @@ import (
 // The cmdOutput argument is used to print the command output.
 func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, errorCh chan<- string) {
 	defer func() {
-		close(outputCh)
-		close(errorCh)
 		wg.Done()
 	}()
 
@@ -26,8 +24,11 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 		return
 	}
 
-	go func() {
-		if cmdOutput {
+	var ioWg sync.WaitGroup
+	if cmdOutput {
+		ioWg.Add(1)
+		go func() {
+			defer ioWg.Done()
 			scanner := bufio.NewScanner(stdout)
 			for scanner.Scan() {
 				outputCh <- scanner.Text()
@@ -35,8 +36,12 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 			if err := scanner.Err(); err != nil {
 				outputCh <- fmt.Sprintf("error: %v", err)
 			}
-		}
-		if cmdError {
+		}()
+	}
+	if cmdError {
+		ioWg.Add(1)
+		go func() {
+			defer ioWg.Done()
 			scanner := bufio.NewScanner(stderr)
 			for scanner.Scan() {
 				errorCh <- scanner.Text()
@@ -44,9 +49,12 @@ func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, e
 			if err := scanner.Err(); err != nil {
 				errorCh <- fmt.Sprintf("error: %v", err)
 			}
-		}
-	}()
+		}()
+	}
 
+	// wait for stdout/stderr scans to be completed
+	ioWg.Wait()
+	// wait for the executed command to be completed
 	command.Wait()
 }
 
