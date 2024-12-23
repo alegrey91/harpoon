@@ -42,8 +42,18 @@ exec chmod +x bin/example-app
 exec ls -la bin/example-app
 exec bin/example-app coin
 
+exec harpoon capture -f main.main -- ./bin/example-app coin
+stdout 'write'
+
 exec harpoon capture -f main.main -c -- ./bin/example-app coin
 stdout 'stdout: \[flip coin\]'
+
+exec harpoon capture -f main.main -e -- ./bin/example-app streams
+stdout 'stderr: 0'
+
+exec harpoon capture -f main.main -c -e -- ./bin/example-app streams
+stdout 'stdout: 0'
+stdout 'stderr: 0'
 
 exec harpoon capture -f main.main -- ./bin/example-app coin
 stdout 'write'
