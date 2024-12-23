@@ -23,5 +23,5 @@ printf "[download succeded]\n"
 
 # install binary
 chmod +x "$BINARY_RELEASE_NAME"
-mv "$BINARY_RELEASE_NAME" "/usr/local/bin/$BINARY_NAME"
+mv "$BINARY_RELEASE_NAME" "/usr/sbin/$BINARY_NAME"
 printf "[installation succeded]\n"
