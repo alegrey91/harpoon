@@ -26,7 +26,7 @@ So, `main.doSomething` is the symbol of the function we want to trace using `har
 Then, let's run `harpoon` to extract the syscalls from the function `main.doSomething`:
 
 ```shell
-harpoon capture -f main.doSomething ./binary
+harpoon capture -f main.doSomething -- ./binary
 read
 sigaltstack
 gettid
@@ -57,6 +57,8 @@ You can easily download the latest release using the installation script:
 ```sh
 curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
 ```
+
+(If your current version is `<= v0.8.2`, remove it from `/usr/local/bin/` before installing the new one).
 
 ### Build
 
