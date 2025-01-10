@@ -52,6 +52,9 @@ stdout 'write'
 exec harpoon capture -f main.main -c -- ./bin/example-app coin
 stdout 'stdout: \[flip coin\]'
 
+exec harpoon capture -f main.main -E "VAR1=0" -E "VAR2=1" -- ./bin/example-app coin
+stdout 'write'
+
 exec harpoon capture -f main.main -e -- ./bin/example-app streams
 stdout 'stderr: 0'
 
