@@ -42,9 +42,10 @@ getrlimit
 
 These are the syscalls that have been executed by the traced function!
 
-For a complete list of available commands, take a look [here](docs/commands.md).
+**Documentation:**
 
-For tutorials, look [here](docs/tutorials.md).
+* [Commands](docs/commands.md)
+* [Tutorials](docs/tutorials.md)
 
 ## Installation
 
@@ -69,6 +70,7 @@ Install dependencies (for Ubuntu):
 * `clang`
 * `libbpf-dev`
 * `libseccomp-dev`
+* `linux-tools-common` (for `bpftool`)
 
 Build the application:
 
