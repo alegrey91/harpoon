@@ -46,12 +46,13 @@ type ebpfSetup struct {
 	lostCh   chan uint64
 	opts     CaptureOptions
 	cmd      []string
+	env      []string
 }
 
 // InitProbes setup the ebpf module attaching probes and tracepoints
 // to the ebpf program.
 // Returns the ebpfSetup struct in case of seccess, an error in case of failure.
-func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*ebpfSetup, error) {
+func InitProbes(functionSymbol string, cmdArgs []string, env []string, opts CaptureOptions) (*ebpfSetup, error) {
 	if len(cmdArgs) == 0 {
 		return nil, errors.New("error no arguments provided, at least 1 argument is required")
 	}
@@ -138,6 +139,7 @@ func InitProbes(functionSymbol string, cmdArgs []string, opts CaptureOptions) (*
 		lostCh:   lostChannel,
 		opts:     opts,
 		cmd:      cmdArgs,
+		env:      env,
 	}, nil
 }
 
@@ -173,6 +175,7 @@ func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, erro
 	// running command to trace its syscalls
 	go executor.Run(
 		ebpf.cmd,
+		ebpf.env,
 		ebpf.opts.CommandOutput,
 		ebpf.opts.CommandError,
 		&wg,
