@@ -88,6 +88,18 @@ To do so, you have the `--dump-interval/-i` flag available. This flag gives you 
 harpoon capture -f main.main --dump-interval 2 -- ./binary_name
 ```
 
+## Tracing a program that requires environment variables to run
+
+`harpoon` provides support to pass environment variables to the executed command.
+
+This is really useful to trace the command changing its behaviour through env vars.
+
+Here's how you can pass multiple env vars to the executed command:
+
+```sh
+harpoon capture -f main.main -E "VAR1=value1" -E "VAR2=value2" -- ./binary_name
+```
+
 ## Tracing from unit-tests
 
 `harpoon` has additional commands other than `capture`. The commands are `analyze` and `hunt`.
