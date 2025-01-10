@@ -26,6 +26,7 @@ import (
 )
 
 var functionSymbols string
+var envVars []string
 var commandOutput bool
 var commandError bool
 var libbpfOutput bool
@@ -66,7 +67,7 @@ by passing the function name symbol and the binary args.
 			errorCh := make(chan error)
 			ctx := context.Background()
 
-			ebpf, err := captor.InitProbes(functionSymbol, args, opts)
+			ebpf, err := captor.InitProbes(functionSymbol, args, envVars, opts)
 			if err != nil {
 				return fmt.Errorf("error setting up ebpf module: %w", err)
 			}
@@ -100,6 +101,7 @@ func init() {
 
 	captureCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
 	captureCmd.MarkFlagRequired("functions")
+	captureCmd.Flags().StringSliceVarP(&envVars, "env-vars", "E", []string{}, "Additional environment variables to pass to the executed command")
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-stdout", "c", false, "Include the executed command output")
 	captureCmd.Flags().BoolVarP(&commandError, "include-cmd-stderr", "e", false, "Include the executed command error")

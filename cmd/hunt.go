@@ -84,7 +84,7 @@ var huntCmd = &cobra.Command{
 				errorCh := make(chan error)
 				ctx := context.Background()
 
-				ebpf, err := captor.InitProbes(functionSymbol, captureArgs, opts)
+				ebpf, err := captor.InitProbes(functionSymbol, captureArgs, envVars, opts)
 				if err != nil {
 					return fmt.Errorf("error setting up ebpf module: %w", err)
 				}

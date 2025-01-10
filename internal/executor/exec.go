@@ -10,12 +10,18 @@ import (
 
 // Run execute the command and wait for its end.
 // The cmdOutput argument is used to print the command output.
-func Run(cmd []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, errorCh chan<- string) {
+func Run(cmd []string, envVars []string, cmdOutput, cmdError bool, wg *sync.WaitGroup, outputCh, errorCh chan<- string) {
 	defer func() {
 		wg.Done()
 	}()
 
 	command := exec.Command(cmd[0], cmd[1:]...)
+	// assign custom env variables to the command
+	env := os.Environ()
+	if len(envVars) > 0 {
+		env = append(env, envVars...)
+	}
+	command.Env = env
 	stdout, _ := command.StdoutPipe()
 	stderr, _ := command.StderrPipe()
 
