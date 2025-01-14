@@ -49,6 +49,9 @@ exec bin/example-app coin
 exec harpoon capture -f main.main -- ./bin/example-app coin
 stdout 'write'
 
+exec harpoon capture -f main.main -f github.com/alegrey91/seccomp-test-coverage/pkg/randomic.FlipCoin -- ./bin/example-app coin
+stdout 'write'
+
 exec harpoon capture -f main.main -c -- ./bin/example-app coin
 stdout 'stdout: \[flip coin\]'
 
