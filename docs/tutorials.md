@@ -46,7 +46,7 @@ As above, first we have to find the symbol's names within the binary with `objdu
 Once found the symbols we are ready to run `harpoon` to trace the functions all togheter:
 
 ```sh
-harpoon capture -f "main.doSomething,test/internal.DoLess" -- ./binary_name
+harpoon capture -f "main.doSomething" -f "test/internal.DoLess" -- ./binary_name
 write
 write
 ```
