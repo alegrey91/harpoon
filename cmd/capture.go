@@ -18,14 +18,13 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/alegrey91/harpoon/internal/ebpf/probesfacade/captor"
 	"github.com/alegrey91/harpoon/internal/writer"
 	"github.com/spf13/cobra"
 )
 
-var functionSymbols string
+var functionSymbols []string
 var envVars []string
 var commandOutput bool
 var commandError bool
@@ -46,9 +45,6 @@ by passing the function name symbol and the binary args.
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		functionSymbolList := strings.Split(functionSymbols, ",")
-
 		opts := captor.CaptureOptions{
 			CommandOutput: commandOutput,
 			CommandError:  commandError,
@@ -62,7 +58,7 @@ by passing the function name symbol and the binary args.
 			Directory: directory,
 		}
 
-		for _, functionSymbol := range functionSymbolList {
+		for _, functionSymbol := range functionSymbols {
 			resultCh := make(chan []uint32)
 			errorCh := make(chan error)
 			ctx := context.Background()
@@ -99,7 +95,7 @@ by passing the function name symbol and the binary args.
 func init() {
 	rootCmd.AddCommand(captureCmd)
 
-	captureCmd.Flags().StringVarP(&functionSymbols, "functions", "f", "", "Name of the function symbols to be traced")
+	captureCmd.Flags().StringSliceVarP(&functionSymbols, "functions", "f", []string{}, "Name of the function symbols to be traced")
 	captureCmd.MarkFlagRequired("functions")
 	captureCmd.Flags().StringSliceVarP(&envVars, "env-vars", "E", []string{}, "Additional environment variables to pass to the executed command")
 
