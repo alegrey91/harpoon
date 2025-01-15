@@ -10,20 +10,16 @@ cd testcases/example-app/
 exec harpoon analyze -h
 stdout 'Usage:'
 
-exec harpoon analyze --save
+exec harpoon analyze --save -D /tmp/results
 exists harpoon-report.yml
-exists .harpoon/
+exists /tmp/results/
 cmp harpoon-report.yml harpoon-expected-report.yml
 
-exec harpoon hunt -S -D harpoon/ -F harpoon-report.yml
-exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_DoSomethingSpecial
-exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_FlipCoin
-exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_RockPaperScissors
-exists harpoon/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_ThrowDice
-
-exec harpoon build -D harpoon/ -S --name profile.json
-exists profile.json
-cmp profile.json expected-profile.json
+exec harpoon hunt -S -D /tmp/results -F harpoon-report.yml
+exists /tmp/results/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_DoSomethingSpecial
+exists /tmp/results/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_FlipCoin
+exists /tmp/results/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_RockPaperScissors
+exists /tmp/results/github_com_alegrey91_seccomp-test-coverage_pkg_randomic_ThrowDice
 
 # test harpoon capture command
 exec harpoon capture -h
@@ -61,6 +57,8 @@ stdout 'write'
 exec harpoon capture -f main.main -e -- ./bin/example-app streams
 stdout 'stderr: 0'
 
+exec harpoon capture -f main.main -D /tmp/results -S -- ./bin/example-app streams
+
 exec harpoon capture -f main.main -c -e -- ./bin/example-app streams
 stdout 'stdout: 0'
 stdout 'stderr: 0'
@@ -80,29 +78,34 @@ stdout 'write'
 stdout 'nanosleep'
 stdout 'stdout: hello!'
 
-exec harpoon capture -f main.main -i 2 -S -D /tmp/test-ten -- ./bin/example-app ten
-exists /tmp/test-ten/main_main
-grep 'write' /tmp/test-ten/main_main
-grep 'nanosleep' /tmp/test-ten/main_main
+exec harpoon capture -f main.main -i 2 -S -D /tmp/results -- ./bin/example-app ten
+exists /tmp/results/main_main
+grep 'write' /tmp/results/main_main
+grep 'nanosleep' /tmp/results/main_main
 
-exec harpoon capture -f main.main -c -i 2 -S -D /tmp/test-ten -- ./bin/example-app ten
+exec harpoon capture -f main.main -c -i 2 -S -D /tmp/results -- ./bin/example-app ten
 stdout -count=10 'stdout: hello!'
-exists /tmp/test-ten/main_main
-grep 'write' /tmp/test-ten/main_main
-grep 'nanosleep' /tmp/test-ten/main_main
+exists /tmp/results/main_main
+grep 'write' /tmp/results/main_main
+grep 'nanosleep' /tmp/results/main_main
 
-exec harpoon capture -f main.main -c -i 2 -S -D /tmp/test-infinite -- ./bin/example-app infinite &infinite&
+exec harpoon capture -f main.main -c -i 2 -S -D /tmp/results -- ./bin/example-app infinite &infinite&
 exec sleep 5
 kill -KILL infinite
 # wait infinite
-exists /tmp/test-infinite/main_main
-grep 'write' /tmp/test-infinite/main_main
-grep 'nanosleep' /tmp/test-infinite/main_main
+exists /tmp/results/main_main
+grep 'write' /tmp/results/main_main
+grep 'nanosleep' /tmp/results/main_main
+
+! exec harpoon build -D /tmp/results -S --name profile.json --add-syscall-sets=abc
+exec harpoon build -D /tmp/results -S --name profile.json --add-syscall-sets=dynamic,static,docker
+exists profile.json
+cmp profile.json expected-profile.json
 
 -- testcases/example-app/harpoon-expected-report.yml --
 ---
 symbolsOrigins:
-  - testBinaryPath: .harpoon/randomic.test
+  - testBinaryPath: /tmp/results/randomic.test
     symbols:
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.RockPaperScissors
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.ThrowDice
@@ -120,9 +123,67 @@ symbolsOrigins:
     "syscalls": [
         {
             "names": [
+                "access",
+                "arch_prctl",
+                "brk",
+                "capget",
+                "capset",
+                "chdir",
+                "clone",
+                "clone3",
+                "close",
+                "epoll_create1",
+                "epoll_ctl",
+                "epoll_pwait",
+                "eventfd",
+                "eventfd2",
+                "execve",
+                "exit_group",
+                "fchown",
+                "fcntl",
+                "fstat",
+                "fstatfs",
                 "futex",
+                "getcwd",
+                "getdents64",
+                "geteuid",
+                "getpgrp",
+                "getpid",
+                "getppid",
+                "getrandom",
+                "getrlimit",
                 "gettid",
+                "ioctl",
+                "lseek",
+                "lstat",
+                "madvise",
+                "mmap",
+                "mprotect",
+                "munmap",
                 "nanosleep",
+                "newfstatat",
+                "openat",
+                "pipe2",
+                "prctl",
+                "pread64",
+                "prlimit64",
+                "read",
+                "rseq",
+                "rt_sigaction",
+                "rt_sigprocmask",
+                "rt_sigreturn",
+                "sched_getaffinity",
+                "sched_yield",
+                "set_robust_list",
+                "set_tid_address",
+                "setgid",
+                "setgroups",
+                "setrlimit",
+                "setsid",
+                "setuid",
+                "sigaltstack",
+                "stat",
+                "tgkill",
                 "write"
             ],
             "action": "SCMP_ACT_ALLOW"

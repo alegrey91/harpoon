@@ -85,18 +85,18 @@ var analyzeCmd = &cobra.Command{
 
 				fmt.Println("building test binary")
 				// build test binary
-				os.Mkdir(".harpoon", 0644)
+				os.Mkdir(directory, 0644)
 				pkgPath := getPackagePath(path)
 				testFile := filepath.Base(path)
 				testFile = strings.ReplaceAll(testFile, "_test.go", ".test")
-				_, err = executor.Build(pkgPath, filepath.Join(".harpoon", testFile))
+				_, err = executor.Build(pkgPath, filepath.Join(directory, testFile))
 				if err != nil {
 					return fmt.Errorf("failed to build test file: %v", err)
 				}
 
-				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(".harpoon", testFile))
+				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(directory, testFile))
 
-				fmt.Println("test: .harpoon/" + testFile)
+				fmt.Println("test: ", filepath.Join(directory, testFile))
 				for _, symbol := range symbolNames {
 					// retrieve tested function from symbol
 					parts := strings.Split(symbol, ".")
@@ -149,6 +149,7 @@ func init() {
 
 	analyzeCmd.Flags().StringVarP(&exclude, "exclude", "e", "", "Skip directories specified in the comma separated list")
 	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "S", false, "Save the result of analysis into a file")
+	analyzeCmd.Flags().StringVarP(&directory, "directory", "D", ".harpoon", "Store saved files in a directory")
 }
 
 func shouldSkipPath(path string) bool {
