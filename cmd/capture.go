@@ -95,16 +95,16 @@ by passing the function name symbol and the binary args.
 func init() {
 	rootCmd.AddCommand(captureCmd)
 
-	captureCmd.Flags().StringSliceVarP(&functionSymbols, "functions", "f", []string{}, "Name of the function symbols to be traced")
-	captureCmd.MarkFlagRequired("functions")
-	captureCmd.Flags().StringSliceVarP(&envVars, "env-vars", "E", []string{}, "Additional environment variables to pass to the executed command")
+	captureCmd.Flags().StringSliceVarP(&functionSymbols, "function", "f", []string{}, "Name of the symbol function to be traced")
+	captureCmd.MarkFlagRequired("function")
+	captureCmd.Flags().StringSliceVarP(&envVars, "env-var", "E", []string{}, "Environment variable to be passed to the executed command")
 
 	captureCmd.Flags().BoolVarP(&commandOutput, "include-cmd-stdout", "c", false, "Include the executed command output")
 	captureCmd.Flags().BoolVarP(&commandError, "include-cmd-stderr", "e", false, "Include the executed command error")
 	captureCmd.Flags().BoolVarP(&libbpfOutput, "include-libbpf-output", "l", false, "Include the libbpf output")
 
 	captureCmd.Flags().BoolVarP(&save, "save", "S", false, "Save output to a file")
-	captureCmd.Flags().StringVarP(&filename, "name", "n", "", "Specify a name for saved output")
+	captureCmd.Flags().StringVarP(&filename, "name", "n", "", "Specify a name for the saved output")
 	captureCmd.Flags().StringVarP(&directory, "directory", "D", "", "Store saved files in a directory")
 	captureCmd.Flags().IntVarP(&dumpInterval, "dump-interval", "i", 0, "Dump results every interval of time")
 	captureCmd.MarkFlagsRequiredTogether("save", "directory")
