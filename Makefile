@@ -1,6 +1,7 @@
 BINARY_NAME=harpoon
 BINARY_DIR=./bin
 OUTPUT_DIR=./output
+IMAGE_NAME=alegrey91/harpoon
 
 build-static-libbpfgo:
 	git clone https://github.com/aquasecurity/libbpfgo.git && \
@@ -68,7 +69,23 @@ endif
 		.
 
 build-docker:
-	docker build --no-cache -t harpoon:latest .
+ifdef GITHUB_REF_NAME
+	docker build \
+	        --no-cache \
+		-t ${IMAGE_NAME}:latest \
+		-t ${IMAGE_NAME}:${GITHUB_REF_NAME} \
+		.
+endif
+	docker build \
+		--no-cache \
+		-t ${IMAGE_NAME}:latest \
+		.
+
+push-docker:
+ifdef GITHUB_REF_NAME
+	docker push ${IMAGE_NAME}:${GITHUB_REF_NAME}
+	docker push ${IMAGE_NAME}:latest
+endif
 
 create-bin-dir:
 	mkdir -p ${BINARY_DIR}
