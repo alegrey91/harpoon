@@ -5,23 +5,57 @@ set -e
 BINARY_NAME="harpoon"
 BINARY_RELEASE_NAME="${BINARY_NAME}"
 
-cd /tmp
+# Check if a version argument is provided
+VERSION="latest"
+INSTALL_DIR="/usr/sbin"
 
-# download binary + checksum file
-curl -s https://api.github.com/repos/alegrey91/harpoon/releases/latest | \
-    grep "browser_download_url" | \
-    cut -d : -f 2,3 | \
-    tr -d \" | \
-    wget -q -i -
+# Parse optional flags
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --install-version)
+            VERSION="$2"
+            shift 2
+            ;;
+        --install-dir)
+            INSTALL_DIR="$2"
+            shift 2
+            ;;
+        *)
+            echo "unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
 
-# check if binary has been downloaded, otherwise exit
-if [ ! -f "$BINARY_RELEASE_NAME" ]; then
-    echo "$BINARY_RELEASE_NAME doesn't exists."
+if [ "$VERSION" == "latest" ]; then
+    # Download the latest release
+    DOWNLOAD_URL=$(curl -s https://api.github.com/repos/alegrey91/harpoon/releases/latest |
+        grep "browser_download_url" |
+        cut -d : -f 2,3 |
+        tr -d \" | \
+        grep "$BINARY_RELEASE_NAME$")
+else
+    # Download the specified version
+    DOWNLOAD_URL=https://github.com/alegrey91/harpoon/releases/download/"$VERSION"/harpoon
+fi
+
+# Validate if the download URL is found
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "error: unable to find the specified version or the latest release."
     exit 1
 fi
-printf "[download succeded]\n"
 
-# install binary
+# Download the binary
+wget -q ${DOWNLOAD_URL} -O "$BINARY_RELEASE_NAME"
+
+# Check if the binary has been downloaded, otherwise exit
+if [ ! -f "$BINARY_RELEASE_NAME" ]; then
+    echo "$BINARY_RELEASE_NAME doesn't exist."
+    exit 1
+fi
+printf "[download succeeded]\n"
+
+# Install the binary
 chmod +x "$BINARY_RELEASE_NAME"
-mv "$BINARY_RELEASE_NAME" "/usr/sbin/$BINARY_NAME"
-printf "[installation succeded]\n"
+mv "$BINARY_RELEASE_NAME" "$INSTALL_DIR/$BINARY_NAME"
+printf "[installation succeeded]\n"
