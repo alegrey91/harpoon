@@ -29,9 +29,9 @@ import (
 )
 
 var (
-	excludedPaths []string
-	exclude       string
-	saveAnalysis  bool
+	excludeList        []string
+	saveAnalysis       bool
+	analysisReportFile = "harpoon-report.yml"
 )
 
 // analyzeCmd represents the create args
@@ -44,10 +44,6 @@ var analyzeCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if exclude != "" {
-			excludedPaths = strings.Split(exclude, ",")
-		}
-
 		file, err := os.Open("go.mod")
 		if err != nil {
 			return fmt.Errorf("failed to open go.mod: %w", err)
@@ -130,13 +126,16 @@ var analyzeCmd = &cobra.Command{
 
 		// store to file
 		if saveAnalysis {
-			file, err = os.Create("harpoon-report.yml")
+			file, err = os.Create(analysisReportFile)
 			if err != nil {
 				return fmt.Errorf("failed to create symbols list file: %w", err)
 			}
 			mw := io.Writer(file)
-			fmt.Fprintln(mw, symbolsList.String())
-			fmt.Println("file harpoon-report.yml is ready")
+			_, err := fmt.Fprintln(mw, symbolsList.String())
+			if err != nil {
+				return fmt.Errorf("error writing into %s: %v", analysisReportFile, err)
+			}
+			fmt.Printf("file %s is ready\n", analysisReportFile)
 		} else {
 			fmt.Println(symbolsList.String())
 		}
@@ -147,13 +146,13 @@ var analyzeCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(analyzeCmd)
 
-	analyzeCmd.Flags().StringVarP(&exclude, "exclude", "e", "", "Skip directories specified in the comma separated list")
-	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "S", false, "Save the result of analysis into a file")
+	analyzeCmd.Flags().StringSliceVarP(&excludeList, "exclude", "e", []string{}, "Exclude directory from analysis")
+	analyzeCmd.Flags().BoolVarP(&saveAnalysis, "save", "S", false, "Save analysis result into a file")
 	analyzeCmd.Flags().StringVarP(&directory, "directory", "D", ".harpoon", "Store saved files in a directory")
 }
 
 func shouldSkipPath(path string) bool {
-	for _, excludedPath := range excludedPaths {
+	for _, excludedPath := range excludeList {
 		if strings.Contains(path, excludedPath) {
 			return true
 		}
