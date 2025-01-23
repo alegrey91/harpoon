@@ -56,13 +56,13 @@ To install `harpoon` you currently have 2 options:
 You can easily download the latest release using the installation script:
 
 ```sh
-curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh
+curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo bash
 ```
 
 Alternatively, if you want to customize your installation, use the following flags:
 
 ```sh
-curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo sh -s -- --install-version v0.9 --install-dir ~/.local/bin/
+curl -s https://raw.githubusercontent.com/alegrey91/harpoon/main/install | sudo bash -s -- --install-version v0.9 --install-dir ~/.local/bin/
 ```
 
 (If your current version is `<= v0.8.2`, remove it from `/usr/local/bin/` before installing the new one).
