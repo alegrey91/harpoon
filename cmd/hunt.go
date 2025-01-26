@@ -61,9 +61,6 @@ var huntCmd = &cobra.Command{
 		//fmt.Println(analysisReport)
 
 		for _, symbolsOrigins := range analysisReport.SymbolsOrigins {
-			fmt.Println("test binary:", symbolsOrigins.TestBinaryPath)
-			fmt.Println("symbols:", symbolsOrigins.Symbols)
-
 			// command builder
 			var captureArgs []string
 			captureArgs = append(captureArgs, symbolsOrigins.TestBinaryPath)
@@ -79,16 +76,16 @@ var huntCmd = &cobra.Command{
 			}
 
 			for _, functionSymbol := range symbolsOrigins.Symbols {
-				fmt.Printf("[%s]\n", functionSymbol)
 				resultCh := make(chan []uint32)
 				errorCh := make(chan error)
 				ctx := context.Background()
 
+				fmt.Println("tracing: ", symbolsOrigins.TestBinaryPath)
+				fmt.Printf("attaching probe: %s\n", functionSymbol)
 				ebpf, err := captor.InitProbes(functionSymbol, captureArgs, envVars, opts)
 				if err != nil {
 					return fmt.Errorf("error setting up ebpf module: %w", err)
 				}
-				defer ebpf.Close()
 
 				// this will get incremental results
 				go func() {
@@ -112,6 +109,7 @@ var huntCmd = &cobra.Command{
 					// the hunting.
 					break
 				}
+				ebpf.Close()
 			}
 		}
 		return nil
