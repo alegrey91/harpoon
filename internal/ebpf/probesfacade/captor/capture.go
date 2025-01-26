@@ -38,7 +38,7 @@ type CaptureOptions struct {
 	Interval      int
 }
 
-type ebpfSetup struct {
+type EbpfSetup struct {
 	mod      *bpf.Module
 	link     *bpf.BPFLink
 	pb       *bpf.PerfBuffer
@@ -52,7 +52,7 @@ type ebpfSetup struct {
 // InitProbes setup the ebpf module attaching probes and tracepoints
 // to the ebpf program.
 // Returns the ebpfSetup struct in case of seccess, an error in case of failure.
-func InitProbes(functionSymbol string, cmdArgs []string, env []string, opts CaptureOptions) (*ebpfSetup, error) {
+func InitProbes(functionSymbol string, cmdArgs []string, env []string, opts CaptureOptions) (*EbpfSetup, error) {
 	if len(cmdArgs) == 0 {
 		return nil, errors.New("error no arguments provided, at least 1 argument is required")
 	}
@@ -131,7 +131,7 @@ func InitProbes(functionSymbol string, cmdArgs []string, env []string, opts Capt
 		return nil, fmt.Errorf("error initializing map (%s) with PerfBuffer: %v", bpfEventsMap, err)
 	}
 
-	return &ebpfSetup{
+	return &EbpfSetup{
 		mod:      bpfModule,
 		link:     traceLink,
 		pb:       pb,
@@ -144,7 +144,7 @@ func InitProbes(functionSymbol string, cmdArgs []string, env []string, opts Capt
 }
 
 // Close closes the ebpf link and module.
-func (ebpf *ebpfSetup) Close() {
+func (ebpf *EbpfSetup) Close() {
 	ebpf.link.Destroy()
 	ebpf.mod.Close()
 }
@@ -152,7 +152,7 @@ func (ebpf *ebpfSetup) Close() {
 // Capture collects syscalls from the executed command.
 // Returns values through the given channels.
 // When the interval is 0, automatically closes the channels.
-func (ebpf *ebpfSetup) Capture(ctx context.Context, resultCh chan []uint32, errorCh chan error) {
+func (ebpf *EbpfSetup) Capture(ctx context.Context, resultCh chan []uint32, errorCh chan error) {
 	// setting up ticker to dump results
 	// every interval of time.
 	var ticker *time.Ticker
