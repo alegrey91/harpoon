@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/alegrey91/harpoon/internal/analyzer"
+	"github.com/alegrey91/harpoon/internal/archiver"
+	"github.com/alegrey91/harpoon/internal/elfreader"
 	"github.com/alegrey91/harpoon/internal/executor"
 	"github.com/alegrey91/harpoon/internal/metadata"
 	"github.com/spf13/cobra"
@@ -57,65 +59,92 @@ var analyzeCmd = &cobra.Command{
 
 		symbolsList := metadata.NewSymbolsList()
 
-		// Walk the directory to find all _test.go files
+		// walk the project file systems to find occurrences of _test.go files.
+		// when we find a _test.go file, we build the entire test of the package
+		// where we found the test.
+		// once built, we read the content of the test file to extract the symbols
+		// of the functions present in the binary.
+		// with all the collected symbols, we verify the presence of their associated function
+		// within the _test.go files in the same directory.
+		// if some function is found, then we add this to the final report.
 		err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return fmt.Errorf("error walking filesystem: %v", err)
 			}
-			fmt.Printf("analyzing file: %s\n", path)
 
 			if shouldSkipPath(path) {
-				fmt.Println("file was skipped")
 				if info.IsDir() {
 					return filepath.SkipDir
 				}
 				return nil
 			}
+			fmt.Printf("analyzing file: %s\n", path)
 
+			// we found a _test.go file, so we are going to build it
+			// and retrieve its symbols.
 			if !info.IsDir() && strings.HasSuffix(info.Name(), "_test.go") {
-				fmt.Println("analyzing symbols")
-				symbolNames, err := analyzer.AnalyzeTestFile(moduleName, path)
-				if err != nil {
-					return fmt.Errorf("unable to infer symbols from test file: %s", path)
-				}
-
-				fmt.Println("building test binary")
 				// build test binary
 				os.Mkdir(directory, 0644)
+
+				// converting pkg where we found tests
+				// to a test-bin-file name.
+				// eg. ./pkg/v1beta1/ -> __pkg_v1beta1.test
 				pkgPath := getPackagePath(path)
-				testFile := filepath.Base(path)
-				testFile = strings.ReplaceAll(testFile, "_test.go", ".test")
-				_, err = executor.Build(pkgPath, filepath.Join(directory, testFile))
+				testBinFile := archiver.Convert(pkgPath)
+				testBinFile = testBinFile + ".test"
+				// this is where we are going to store out test-bin-file.
+				testBinPath := filepath.Join(directory, testBinFile)
+
+				fmt.Println("building test binary:", testBinFile)
+				_, err = executor.Build(pkgPath, testBinPath)
 				if err != nil {
 					return fmt.Errorf("failed to build test file: %v", err)
 				}
 
-				symbolsOrig := metadata.NewSymbolsOrigin(filepath.Join(directory, testFile))
-
-				fmt.Println("test: ", filepath.Join(directory, testFile))
-				for _, symbol := range symbolNames {
-					// retrieve tested function from symbol
-					parts := strings.Split(symbol, ".")
-					testedFunction := parts[len(parts)-1]
-
-					// retrieve source file from _test.go file
-					sourceFile := strings.ReplaceAll(path, "_test", "")
-					file, err := os.Open(sourceFile)
-					if err != nil {
-						return fmt.Errorf("failed to open %s: %v", sourceFile, err)
-					}
-					defer file.Close()
-
-					functionExists, err := analyzer.CheckFunctionExists(testedFunction, file)
-					if !functionExists {
-						fmt.Printf("function not found: %v\n", err)
-						continue
-					}
-					symbolsOrig.Add(symbol)
+				// retrieving function symbols from ELF file.
+				elf := elfreader.NewElfReader(testBinPath)
+				symbolsFromElf, err := elf.FunctionSymbols(moduleName)
+				if err != nil {
+					return fmt.Errorf("failed to get function symbols: %v", err)
 				}
+
+				symbolsOrig := metadata.NewSymbolsOrigin(testBinPath)
+
+				// for each symbol found in the ELF file,
+				// we are going to verify if the related function exists
+				// in the _test.go files in the same directory.
+				// if not, they will not be included in the report,
+				// so we can avoid useless symbols to be traced.
+				for _, symbol := range symbolsFromElf {
+					functionName := analyzer.ExtractFunctionName(symbol)
+					testFiles, _ := listTestFiles(path)
+					for _, testFile := range testFiles {
+						tf, err := os.Open(testFile)
+						if err != nil {
+							fmt.Printf("error opening file: %v\n", err)
+							continue
+						}
+						defer tf.Close()
+
+						exists, _ := analyzer.CheckFunctionExists(functionName, tf)
+						if exists {
+							//fmt.Printf("function %s exists in file %s\n", functionName, testFile)
+							symbolsOrig.Add(symbol)
+							break // this will save us some iterations
+						}
+					}
+				}
+				// if we've found symbols, then we add the list
+				// to the corresponding binary entry.
+				// eg:
+				// - testBinaryPath: /tmp/artifacts/__pkg_utils.test
+				//   symbols:
+				//   - github.com/myuser/myproject/pkg/utils.NewUserGroupList
+				//   - github.com/myuser/myproject/pkg/utils.(*userGroupList).Find
 				if !symbolsOrig.IsEmpty() {
 					symbolsList.Add(symbolsOrig)
 				}
+				return filepath.SkipDir
 			}
 			return nil
 		})
@@ -185,4 +214,24 @@ func getPackagePath(inputPath string) string {
 	dirPath = "./" + dirPath
 
 	return dirPath
+}
+
+// listTestFiles lists all files in the directory that end with "_test.go".
+func listTestFiles(directory string) ([]string, error) {
+	var testFiles []string
+
+	// Walk through the directory
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err // Handle errors while walking
+		}
+
+		// Check if the file ends with "_test.go"
+		if !info.IsDir() && strings.HasSuffix(info.Name(), "_test.go") {
+			testFiles = append(testFiles, path)
+		}
+		return nil
+	})
+
+	return testFiles, err
 }

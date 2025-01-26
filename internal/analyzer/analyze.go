@@ -68,10 +68,13 @@ func GetModuleName(goModFile *os.File) (string, error) {
 }
 
 func CheckFunctionExists(functionName string, goFile *os.File) (bool, error) {
+	searchString := functionName + "("
+
 	scanner := bufio.NewScanner(goFile)
+
 	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "func "+functionName) {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.Contains(line, searchString) {
 			return true, nil
 		}
 	}
@@ -80,4 +83,15 @@ func CheckFunctionExists(functionName string, goFile *os.File) (bool, error) {
 		return false, fmt.Errorf("error reading %s: %v", goFile.Name(), err)
 	}
 	return false, fmt.Errorf("unable to find function \"%s\" in %s file", functionName, goFile.Name())
+}
+
+// ExtractFunctionName extracts the function name from the given string.
+func ExtractFunctionName(path string) string {
+	// Split the string by the '.' character
+	parts := strings.Split(path, ".")
+	if len(parts) == 0 {
+		return ""
+	}
+	// Return the last part of the split result
+	return parts[len(parts)-1]
 }
