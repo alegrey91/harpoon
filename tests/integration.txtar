@@ -105,7 +105,7 @@ cmp profile.json expected-profile.json
 -- testcases/example-app/harpoon-expected-report.yml --
 ---
 symbolsOrigins:
-  - testBinaryPath: /tmp/results/randomic.test
+  - testBinaryPath: /tmp/results/__pkg_randomic.test
     symbols:
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.RockPaperScissors
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.ThrowDice
