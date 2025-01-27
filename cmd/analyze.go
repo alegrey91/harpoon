@@ -102,8 +102,11 @@ var analyzeCmd = &cobra.Command{
 				}
 
 				// retrieving function symbols from ELF file.
-				elf := elfreader.NewElfReader(testBinPath)
-				symbolsFromElf, err := elf.FunctionSymbols(moduleName)
+				elf, err := elfreader.NewElfReader(testBinPath)
+				if err != nil {
+					return fmt.Errorf("failed to initialize elf file: %v", err)
+				}
+				fnSymbols, err := elf.FunctionSymbols(moduleName)
 				if err != nil {
 					return fmt.Errorf("failed to get function symbols: %v", err)
 				}
@@ -115,7 +118,7 @@ var analyzeCmd = &cobra.Command{
 				// in the _test.go files in the same directory.
 				// if not, they will not be included in the report,
 				// so we can avoid useless symbols to be traced.
-				for _, symbol := range symbolsFromElf {
+				for _, symbol := range fnSymbols {
 					functionName := analyzer.ExtractFunctionName(symbol)
 					testFiles, _ := listTestFiles(path)
 					for _, testFile := range testFiles {
