@@ -11,15 +11,21 @@ type ElfReader struct {
 	file *elf.File
 }
 
+// Regular expression to match ".func" followed by one or more digits
+var reGoroutine = regexp.MustCompile(`\.func\d+$`)
+
+// Regular expression to check for valid Test suffix patterns
+var reTestFunction = regexp.MustCompile(`\.Test[\w.]*$`)
+
 // NewElfReader opens an ELF file and returns the ElfReader struct.
-func NewElfReader(filePath string) *ElfReader {
+func NewElfReader(filePath string) (*ElfReader, error) {
 	elfFile, err := elf.Open(filePath)
 	if err != nil {
-		fmt.Println("error: %w", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	return &ElfReader{
 		file: elfFile,
-	}
+	}, nil
 }
 
 // Close closes the ElfReader file.
@@ -37,7 +43,7 @@ func (e *ElfReader) FunctionSymbols(pattern string) ([]string, error) {
 	var symbolsList []string
 	for _, symb := range symbols {
 		// filter only function symbols
-		if !(elf.ST_TYPE(symb.Info) == elf.STT_FUNC) {
+		if elf.ST_TYPE(symb.Info) != elf.STT_FUNC {
 			continue
 		}
 		// filter for package related symbols
@@ -63,14 +69,10 @@ func (e *ElfReader) FunctionSymbols(pattern string) ([]string, error) {
 
 // isGoroutine detects if the symbol passed as argument is a goroutine function.
 func isGoroutine(s string) bool {
-	// Regular expression to match ".func" followed by one or more digits
-	re := regexp.MustCompile(`\.func\d+$`)
-	return re.MatchString(s)
+	return reGoroutine.MatchString(s)
 }
 
 // isTestFunction detects if the symbol passed as argument is a Test function.
 func isTestFunction(s string) bool {
-	// Regular expression to check for valid Test suffix patterns
-	re := regexp.MustCompile(`\.Test[\w.]*$`)
-	return re.MatchString(s)
+	return reTestFunction.MatchString(s)
 }
