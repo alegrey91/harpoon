@@ -1,7 +1,7 @@
 # this testscript test the 'analyze' command
 
 # skip if go is not installed
-[!exec:go] skip
+#[!exec:go] skip
 
 # move on the testcases directory
 cd testcases/example-app/
@@ -111,6 +111,7 @@ symbolsOrigins:
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.ThrowDice
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.FlipCoin
     - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.DoSomethingSpecial
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.DoNothing
 
 -- testcases/example-app/expected-profile.json --
 {

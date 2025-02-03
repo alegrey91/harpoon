@@ -59,3 +59,14 @@ func DoForTenSec() {
 		time.Sleep(time.Second)
 	}
 }
+
+// DoNothing is an empty function,
+// made to test the compilation of test binaries
+// with optimization disabled: "all=-N -l"
+// This will make the compiler create the symbol
+// for the function, even if it's not needed.
+// This is needed since harpoon uses the symbols
+// to attach the uprobres and trace their syscalls.
+func DoNothing() bool {
+	return true
+}

@@ -132,3 +132,22 @@ func TestDoSomethingSpecial(t *testing.T) {
 		})
 	}
 }
+
+func TestDoNothing(t *testing.T) {
+	tests := []struct {
+		name string
+		want bool
+	}{
+		{
+			name: "this test doesn't test anything",
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := DoNothing(); got != tt.want {
+				t.Errorf("DoNothing() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
