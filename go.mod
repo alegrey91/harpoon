@@ -1,6 +1,6 @@
 module github.com/alegrey91/harpoon
 
-go 1.22
+go 1.23
 
 toolchain go1.23.2
 
