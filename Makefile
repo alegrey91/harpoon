@@ -1,7 +1,7 @@
 BINARY_NAME=harpoon
 BINARY_DIR=./bin
 OUTPUT_DIR=./output
-IMAGE_NAME=alegrey91/harpoon
+IMAGE_NAME?=alegrey91/harpoon
 
 build-static-libbpfgo:
 	git clone https://github.com/aquasecurity/libbpfgo.git && \
