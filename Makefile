@@ -3,6 +3,9 @@ BINARY_DIR=./bin
 OUTPUT_DIR=./output
 IMAGE_NAME?=alegrey91/harpoon
 
+GO_VERSION := $(shell grep '^toolchain' go.mod | awk '{print $$2}' | sed 's/go//')
+
+
 build-static-libbpfgo:
 	git clone https://github.com/aquasecurity/libbpfgo.git && \
 	cd libbpfgo/ && \
@@ -68,18 +71,21 @@ endif
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
-build-docker:
+build-docker: build
 ifdef GITHUB_REF_NAME
 	docker build \
 	        --no-cache \
-		-t ${IMAGE_NAME}:latest \
-		-t ${IMAGE_NAME}:${GITHUB_REF_NAME} \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		-t $(IMAGE_NAME):latest \
+		-t $(IMAGE_NAME):$(GITHUB_REF_NAME) \
 		.
-endif
+else
 	docker build \
 		--no-cache \
-		-t ${IMAGE_NAME}:latest \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		-t $(IMAGE_NAME):latest \
 		.
+endif
 
 push-docker:
 ifdef GITHUB_REF_NAME
