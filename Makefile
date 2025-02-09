@@ -2,7 +2,6 @@ BINARY_NAME=harpoon
 BINARY_DIR=./bin
 OUTPUT_DIR=./output
 IMAGE_NAME?=alegrey91/harpoon
-
 GO_VERSION := $(shell grep '^toolchain' go.mod | awk '{print $$2}' | sed 's/go//')
 
 
