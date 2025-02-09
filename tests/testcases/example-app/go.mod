@@ -1,6 +1,7 @@
 module github.com/alegrey91/seccomp-test-coverage
 
-go 1.20
+go 1.23
+toolchain go1.23.2
 
 require github.com/spf13/cobra v1.7.0
 
