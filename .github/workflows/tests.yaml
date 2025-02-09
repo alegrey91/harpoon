@@ -8,15 +8,22 @@ on:
 
 jobs:
   unit-test:
-
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Get Go version from go.mod
+        id: get_go_version
+        run: |
+          # Extract the version from the toolchain line (e.g. "toolchain go1.23.2" becomes "1.23.2")
+          go_version=$(grep '^toolchain' go.mod | awk '{print $2}' | sed 's/go//')
+          echo "go_version=$go_version" >> $GITHUB_OUTPUT
 
       - name: Set up Go
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
         with:
-          go-version: '1.21'
+          go-version: ${{ steps.get_go_version.outputs.go_version }}
 
       - name: Install Dependencies
         run: |
@@ -42,21 +49,27 @@ jobs:
             -args -test.gocoverdir=/tmp/unit/
 
       - name: Upload cover profiles
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
         with:
           name: unit-test
           path: /tmp/unit/
 
   integration-test:
-
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Get Go version from go.mod
+        id: get_go_version
+        run: |
+          go_version=$(grep '^toolchain' go.mod | awk '{print $2}' | sed 's/go//')
+          echo "go_version=$go_version" >> $GITHUB_OUTPUT
 
       - name: Set up Go
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
         with:
-          go-version: '1.21'
+          go-version: ${{ steps.get_go_version.outputs.go_version }}
 
       - name: Install Dependencies
         run: |
@@ -78,72 +91,55 @@ jobs:
       - name: Run integration test
         run: |
           mkdir -p /tmp/integration
-          # we have to run integration tests one-by-one
-          # otherwhise they will run in parallel.
-          # since harpoon apply network forwards, these could 
-          # interact with each other and make the test fail.
+          # We run integration tests one-by-one to avoid parallel issues
           go test \
             -exec sudo \
             -cover \
             -v main_test.go \
             -args -test.gocoverdir=/tmp/integration/
+            
       - name: Upload cover profiles
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # ratchet:actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
         with:
           name: integration-test
           path: /tmp/integration/
+
   code-coverage:
     runs-on: ubuntu-22.04
     needs: [unit-test, integration-test]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Get Go version from go.mod
+        id: get_go_version
+        run: |
+          go_version=$(grep '^toolchain' go.mod | awk '{print $2}' | sed 's/go//')
+          echo "go_version=$go_version" >> $GITHUB_OUTPUT
+
+      - name: Download Unit Test Artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           name: unit-test
           path: /tmp/unit-test
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+
+      - name: Download Integration Test Artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           name: integration-test
           path: /tmp/integration-test
-      - name: list files
-        run: |2
 
+      - name: List files
+        run: |
           ls -lah /tmp/unit-test
           ls -lah /tmp/integration-test
+
       - name: Set up Go
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
         with:
-          go-version: '1.21'
+          go-version: ${{ steps.get_go_version.outputs.go_version }}
 
       - name: Calculate total coverage
         run: |
-          go tool \
-            covdata \
-            textfmt \
-            -i=/tmp/unit-test,/tmp/integration-test \
-            -o=code-coverage
-          go tool \
-            cover \
-            -func code-coverage
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          go tool covdata textfmt -i=/tmp/unit-test,/tmp/integration-test -o=code-coverage
+          go tool cover -func code-coverage

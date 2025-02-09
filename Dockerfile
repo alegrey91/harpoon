@@ -1,5 +1,6 @@
 # Minimal Base Image
-FROM golang:1.23.2 AS builder
+ARG GO_VERSION=1.23.2
+FROM golang:${GO_VERSION} AS builder
 
 WORKDIR /workspace
 
