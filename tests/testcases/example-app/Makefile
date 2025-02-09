@@ -1,3 +1,6 @@
+# Optionally extract the Go version from go.mod (if a toolchain line exists)
+GO_VERSION := $(shell grep '^toolchain' go.mod | awk '{print $$2}' | sed 's/go//')
+
 BINARY_NAME=example-app
 BINARY_DIR=bin
 UNIT_TEST_DIR=/tmp/unit
@@ -21,8 +24,8 @@ run:
 
 test: unit-test
 
-# here we are compiling the _test package(s) we want to test,
-# so we are able to run manually unsing the `strace` utility.
+# Here we are compiling the _test package(s) we want to test,
+# so we are able to run manually using the `strace` utility.
 unit-test:
 	rm -rf ${UNIT_TEST_DIR}
 	mkdir ${UNIT_TEST_DIR}
