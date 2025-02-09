@@ -10,24 +10,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
       - name: Get Go version from go.mod
         id: get_go_version
         run: |
           go_version=$(grep '^toolchain' go.mod | awk '{print $2}' | sed 's/go//')
-          echo "go_version=$go_version" >> $GITHUB_OUTPUT
-
       - name: Set up Go
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
         with:
           go-version: ${{ steps.get_go_version.outputs.go_version }}
-
       - name: Install BCC Dependencies
         run: |
           sudo apt update
           sudo apt install -y libbpf-dev                # Install libbpf dependencies
-          sudo apt install -y libseccomp-dev              # Install Seccomp dependencies
-
+          sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
       - name: Build and Test
-        run: make build-gh
+        run: |-
+          make build-gh
