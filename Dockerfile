@@ -38,6 +38,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/bin/harpoon .
+
 # run it with the following command:
 # docker run \
 # -it \
