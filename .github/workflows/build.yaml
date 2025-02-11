@@ -11,10 +11,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
-      - name: Get Go version from go.mod
+      - name: Get Go version from Makefile
         id: get_go_version
         run: |
-          go_version=$(grep '^toolchain' go.mod | awk '{print $2}' | sed 's/go//')
+          go_version=$(make go-version)
       - name: Set up Go
         uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # ratchet:actions/setup-go@v5
         with:

@@ -105,3 +105,6 @@ clean:
 	rm -rf ${OUTPUT_DIR}
 	rm -rf ${BINARY_DIR}
 	rm -rf ./libbpfgo
+
+go-version:
+	@grep '^toolchain' go.mod | awk '{print $$2}' | sed 's/go//'
