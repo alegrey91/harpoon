@@ -1,6 +1,5 @@
 # Minimal Base Image
-ARG GO_VERSION=1.23.2
-FROM golang:${GO_VERSION} AS builder
+FROM golang:1.23.2 AS builder
 
 WORKDIR /workspace
 
@@ -38,8 +37,7 @@ RUN apt-get update && \
     libelf1 && \
     rm -rf /var/lib/apt/lists/*
 
-COPY bin/harpoon .
-
+COPY --from=builder /workspace/bin/harpoon .
 # run it with the following command:
 # docker run \
 # -it \
