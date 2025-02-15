@@ -33,16 +33,9 @@ jobs:
           make build-static-libbpfgo
           make build-bpf
 
-      - name: Run Unit-Test
+      - name: Run unit tests
         run: |
-          mkdir /tmp/unit/
-          # test packages excluding the ones with libbpfgo
-          go test \
-            -cover \
-            -v \
-            $(go list ./... | grep -v "github.com/alegrey91/harpoon$" | grep -v ebpf | grep -v cmd) \
-            -skip TestHarpoon \
-            -args -test.gocoverdir=/tmp/unit/
+         make unit-tests 
 
       - name: Upload cover profiles
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # ratchet:actions/upload-artifact@v4
@@ -82,18 +75,10 @@ jobs:
         run: |
           make build -C tests/testcases/example-app/
 
-      - name: Run integration test
+      - name: Run integration tests
         run: |
-          mkdir -p /tmp/integration
-          # we have to run integration tests one-by-one
-          # otherwhise they will run in parallel.
-          # since harpoon apply network forwards, these could 
-          # interact with each other and make the test fail.
-          go test \
-            -exec sudo \
-            -cover \
-            -v main_test.go \
-            -args -test.gocoverdir=/tmp/integration/
+          make integration-tests
+
       - name: Upload cover profiles
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # ratchet:actions/upload-artifact@v4
         with:

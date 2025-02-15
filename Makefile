@@ -92,6 +92,23 @@ ifdef GITHUB_REF_NAME
 	docker push ${IMAGE_NAME}:latest
 endif
 
+unit-tests:
+	mkdir -p /tmp/unit/
+	go test \
+	  -cover \
+	  -v \
+	  $(shell go list ./... | grep -v "github.com/alegrey91/harpoon$$" | grep -v ebpf | grep -v cmd) \
+	  -skip TestHarpoon \
+	  -args -test.gocoverdir=/tmp/unit/
+
+integration-tests:
+	mkdir -p /tmp/integration
+	go test \
+	  -exec sudo \
+	  -cover \
+	  -v main_test.go \
+	  -args -test.gocoverdir=/tmp/integration/
+
 create-bin-dir:
 	mkdir -p ${BINARY_DIR}
 
@@ -99,7 +116,7 @@ create-output-dir:
 	mkdir -p ${OUTPUT_DIR}
 
 install:
-	cp ${BINARY_DIR}/${BINARY_NAME} /usr/sbin/
+	cp ${BINARY_DIR}/${BINARY_NAME} /usr/local/bin
 
 clean:
 	rm -rf ${OUTPUT_DIR}

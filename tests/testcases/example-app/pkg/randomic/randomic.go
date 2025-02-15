@@ -3,6 +3,7 @@ package randomic
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -69,4 +70,26 @@ func DoForTenSec() {
 // to attach the uprobres and trace their syscalls.
 func DoNothing() bool {
 	return true
+}
+
+func RunGoroutines() {
+	var wg sync.WaitGroup
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		fmt.Println("hello")
+	}()
+	go func() {
+		defer wg.Done()
+		syscall.Gettid()
+	}()
+	go func() {
+		defer wg.Done()
+		syscall.Read(10, []byte("aaaaaaa"))
+	}()
+	go func() {
+		defer wg.Done()
+		syscall.Sync()
+	}()
+	wg.Wait()
 }

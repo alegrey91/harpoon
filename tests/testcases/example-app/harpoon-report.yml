@@ -1,0 +1,10 @@
+---
+symbolsOrigins:
+  - testBinaryPath: /tmp/harpoon/__pkg_randomic.test
+    symbols:
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.RockPaperScissors
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.ThrowDice
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.FlipCoin
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.DoSomethingSpecial
+    - github.com/alegrey91/seccomp-test-coverage/pkg/randomic.DoNothing
+
