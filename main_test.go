@@ -14,10 +14,10 @@ func TestHarpoon(t *testing.T) {
 		//Cmds:                customCommands(),
 		RequireExplicitExec: true,
 		Setup: func(env *testscript.Env) error {
-			existingDir := filepath.Join("tests", "testcases")
-			destDir := filepath.Join(env.WorkDir, "testcases")
-			// Copy the directory to the test environment
-			err := copyDir(existingDir, destDir)
+			// copy test cases into test env
+			testCasesSourceDir := filepath.Join("tests", "testcases")
+			testCasesDestDir := filepath.Join(env.WorkDir, "testcases")
+			err := copyDir(testCasesSourceDir, testCasesDestDir)
 			if err != nil {
 				return err
 			}

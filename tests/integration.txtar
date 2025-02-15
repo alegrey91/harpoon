@@ -69,6 +69,13 @@ stdout 'write'
 exec harpoon capture -f main.main -l -- ./bin/example-app coin
 stderr 'libbpf: license of ebpf.o is GPL'
 
+# verify all the syscalls from different goroutines are traced
+exec harpoon capture -f main.main -l -- ./bin/example-app goroutines
+stdout 'write'
+stdout 'gettid'
+stdout 'read'
+stdout 'sync'
+
 exec harpoon capture -f main.main -i 2 -- ./bin/example-app ten
 stdout 'write'
 stdout 'nanosleep'
@@ -164,7 +171,6 @@ symbolsOrigins:
                 "nanosleep",
                 "newfstatat",
                 "openat",
-                "pipe2",
                 "prctl",
                 "pread64",
                 "prlimit64",
