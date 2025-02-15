@@ -33,6 +33,7 @@ var (
 	saveProfile         bool
 	profileName         = "seccomp.json"
 	syscallSets         []string
+	syscallVariants     bool
 	dynamicBin          = "dynamic"
 	staticBin           = "static"
 	dockerEnv           = "docker"
@@ -66,7 +67,7 @@ var buildCmd = &cobra.Command{
 		if slices.Contains(syscallSets, dynamicBin) {
 			for _, syscall := range syscallutils.MinDynamicGoSyscallSet {
 				if seccomp.IsValidSyscall(syscall) {
-					syscallList[string(syscall)]++
+					syscallList[syscall]++
 				}
 			}
 		}
@@ -74,7 +75,7 @@ var buildCmd = &cobra.Command{
 		if slices.Contains(syscallSets, staticBin) {
 			for _, syscall := range syscallutils.MinStaticGoSyscallSet {
 				if seccomp.IsValidSyscall(syscall) {
-					syscallList[string(syscall)]++
+					syscallList[syscall]++
 				}
 			}
 		}
@@ -82,7 +83,7 @@ var buildCmd = &cobra.Command{
 		if slices.Contains(syscallSets, dockerEnv) {
 			for _, syscall := range syscallutils.MinDockerSyscallSet {
 				if seccomp.IsValidSyscall(syscall) {
-					syscallList[string(syscall)]++
+					syscallList[syscall]++
 				}
 			}
 		}
@@ -99,9 +100,22 @@ var buildCmd = &cobra.Command{
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				syscall := scanner.Text()
-				if seccomp.IsValidSyscall(syscall) {
-					syscallList[string(syscall)]++
+				if !seccomp.IsValidSyscall(syscall) {
+					continue
 				}
+				if syscallVariants {
+					variants := syscallutils.GetVariants(syscall)
+					if len(variants) > 0 {
+						for _, v := range variants {
+							syscallList[v]++
+						}
+						// once all the variants have been added to the list
+						// we can skip the adding of the original syscall
+						// since it's already in the list.
+						continue
+					}
+				}
+				syscallList[syscall]++
 			}
 		}
 
@@ -143,6 +157,7 @@ func init() {
 	buildCmd.MarkFlagRequired("directory")
 
 	buildCmd.Flags().StringSliceVarP(&syscallSets, "add-syscall-sets", "s", []string{}, fmt.Sprintf("Add syscall sets to the final list (available sets: %s, %s, %s)", dynamicBin, staticBin, dockerEnv))
+	buildCmd.Flags().BoolVarP(&syscallVariants, "add-syscall-variants", "V", false, "Add syscall variants to the final list")
 	buildCmd.Flags().BoolVarP(&saveProfile, "save", "S", false, "Save profile to a file")
 	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "Specify a name for the seccomp profile")
 }
