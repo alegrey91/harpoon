@@ -1,6 +1,9 @@
 # Minimal Base Image
 FROM golang:1.23.2 AS builder
 
+ARG GITHUB_REF_NAME=test
+ENV GITHUB_REF_NAME=$GITHUB_REF_NAME
+
 WORKDIR /workspace
 
 # Install required dependencies
@@ -25,7 +28,7 @@ COPY go.sum go.sum
 COPY Makefile Makefile 
 
 # Build harpoon
-RUN make build
+RUN make build-gh
 
 # Final stage
 FROM debian:bookworm-slim
