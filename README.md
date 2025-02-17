@@ -98,6 +98,13 @@ I had the pleasure of speaking about `harpoon` at the following conferences:
 * [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM) (Apr 24)
 * [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/) (Feb 24)
 
+## Adopters
+
+This is a list of projects that are using `harpoon` for generating **Seccomp** profiles on their pipeline:
+
+* [**alegrey91/fwdctl**](https://github.com/alegrey91/fwdctl)
+* [**projectcapsule/capsule**](https://github.com/projectcapsule/capsule)
+
 ## References
 
 I would like to point out that without the references mentioned below this project would never have come to life.
