@@ -1,35 +1,5 @@
-# Minimal Base Image
-FROM golang:1.23.2 AS builder
-
-WORKDIR /workspace
-
-# Install required dependencies
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
-	clang \
-	git \
-	libelf-dev \
-	libbpf-dev \
-	libseccomp-dev \
-	build-essential \
-	bpftool \
-    ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy the required file to build the application
-COPY cmd/ cmd/
-COPY ebpf/ ebpf/
-COPY internal/ internal/
-COPY main.go main.go
-COPY go.mod go.mod
-COPY go.sum go.sum
-COPY Makefile Makefile 
-
-# Build harpoon
-RUN make build
-
 # Final stage
-FROM debian:bookworm-slim
+FROM ubuntu:24.10
 
 WORKDIR /
 
