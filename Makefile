@@ -7,6 +7,7 @@ GO_VERSION := $(shell grep '^toolchain' go.mod | awk '{print $$2}' | sed 's/go//
 
 build-static-libbpfgo:
 	git submodule update --init --recursive && \
+	cd libbpfgo && \
 	make libbpfgo-static
 
 vmlinux.h:
