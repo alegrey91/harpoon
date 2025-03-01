@@ -8,7 +8,7 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
 	clang \
 	git \
-	libelf1 \
+	libelf-dev \
 	libbpf-dev \
 	libseccomp-dev \
 	build-essential \
