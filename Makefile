@@ -70,7 +70,7 @@ endif
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
-build-docker: build
+build-docker:
 ifdef GITHUB_REF_NAME
 	docker build \
 	        --no-cache \

@@ -8,7 +8,7 @@ RUN apt-get update && \
     libelf1 && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /workspace/bin/harpoon .
+COPY bin/harpoon .
 
 # run it with the following command:
 # docker run \
