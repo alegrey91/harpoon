@@ -1,8 +1,10 @@
 name: Build
 on:
   push:
-    branches:
-      - 'main'
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
 permissions:
   contents: write
 jobs:
@@ -25,5 +27,16 @@ jobs:
           sudo apt install -y libbpf-dev                # Install libbpf dependencies
           sudo apt install -y libseccomp-dev            # Install Seccomp dependencies
       - name: Build and Test
-        run: |-
+        run: |
           make build-gh
+
+  build-docker:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      - name: Build Docker image
+        run: make build-docker
+
