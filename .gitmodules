@@ -1,0 +1,3 @@
+[submodule "libbpfgo"]
+	path = libbpfgo
+	url = https://github.com/aquasecurity/libbpfgo
