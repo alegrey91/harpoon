@@ -70,7 +70,7 @@ endif
 		-o ${BINARY_DIR}/${BINARY_NAME} \
 		.
 
-build-docker:
+build-docker-gh:
 ifdef GITHUB_REF_NAME
 	docker build \
 	        --no-cache \
@@ -78,13 +78,14 @@ ifdef GITHUB_REF_NAME
 		-t $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):$(GITHUB_REF_NAME) \
 		.
-else
+endif
+
+build-docker:
 	docker build \
 		--no-cache \
 		--build-arg GO_VERSION=$(GO_VERSION) \
 		-t $(IMAGE_NAME):latest \
 		.
-endif
 
 push-docker:
 ifdef GITHUB_REF_NAME

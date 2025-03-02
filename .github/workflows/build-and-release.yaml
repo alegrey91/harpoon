@@ -69,7 +69,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
       - name: Build Docker image
-        run: make build-docker
+        run: make build-docker-gh
 
       - name: Push Docker image to Docker Hub
         run: make push-docker
@@ -82,7 +82,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: IMAGE_NAME="ghcr.io/alegrey91/harpoon" make build-docker
+        run: IMAGE_NAME="ghcr.io/alegrey91/harpoon" make build-docker-gh
   
       - name: Push Docker image to Docker Hub
         run: IMAGE_NAME="ghcr.io/alegrey91/harpoon" make push-docker
