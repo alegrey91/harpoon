@@ -81,6 +81,8 @@ func decodeInstruction(instHex []byte, arch elf.Machine) ([]uint64, error) {
 		return decodeInstructionX86_64(instHex)
 	case elf.EM_ARM:
 		return decodeInstructionArm64(instHex)
+	case elf.EM_AARCH64:
+		return decodeInstructionArm64(instHex)
 	default:
 		return nil, fmt.Errorf("unsupported architecture")
 	}
