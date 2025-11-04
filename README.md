@@ -94,9 +94,10 @@ In case you want to run the application locally, I've provided the [`.vscode/lau
 
 I had the pleasure of speaking about `harpoon` at the following conferences:
 
-* [**GOLAB**](https://www.youtube.com/watch?v=A5A_Ll9o1Rc) (Nov 24)
-* [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM) (Apr 24)
-* [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/) (Feb 24)
+* [**GOLAB**](https://www.youtube.com/watch?v=A5A_Ll9o1Rc) (Nov 24) (EN)
+* [**Golang Meetup Roma**](https://www.youtube.com/watch?v=iUg3fkoNxcY) (Sep 24) (IT)
+* [**Conf42**](https://www.youtube.com/watch?v=Z8IHOTlG3pM) (Apr 24) (EN)
+* [**FOSDEM**](https://fosdem.org/2024/schedule/event/fosdem-2024-1884-how-we-almost-secured-our-projects-by-writing-more-tests/) (Feb 24) (EN)
 
 ## Adopters
 
