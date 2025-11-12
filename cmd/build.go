@@ -38,6 +38,7 @@ var (
 	staticBin           = "static"
 	dockerEnv           = "docker"
 	expectedSyscallSets = []string{dynamicBin, staticBin, dockerEnv}
+	architectures       = []string{"SCMP_ARCH_X86_64", "SCMP_ARCH_X86", "SCMP_ARCH_X32"}
 )
 
 // buildCmd represents the create args
@@ -125,7 +126,7 @@ var buildCmd = &cobra.Command{
 		}
 		sort.Strings(syscalls)
 
-		profile, err := seccomp.BuildProfile(syscalls)
+		profile, err := seccomp.BuildProfile(syscalls, architectures)
 		if err != nil {
 			return fmt.Errorf("error building seccomp profile: %w", err)
 		}
@@ -153,13 +154,14 @@ var buildCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(buildCmd)
 
-	buildCmd.Flags().StringVarP(&inputDirectory, "directory", "D", "", "Directory containing harpoon's metadata files")
+	buildCmd.Flags().StringVarP(&inputDirectory, "directory", "D", "", "directory containing harpoon's metadata files")
 	buildCmd.MarkFlagRequired("directory")
 
-	buildCmd.Flags().StringSliceVarP(&syscallSets, "add-syscall-sets", "s", []string{}, fmt.Sprintf("Add syscall sets to the final list (available sets: %s, %s, %s)", dynamicBin, staticBin, dockerEnv))
-	buildCmd.Flags().BoolVarP(&syscallVariants, "add-syscall-variants", "V", false, "Add syscall variants to the final list")
-	buildCmd.Flags().BoolVarP(&saveProfile, "save", "S", false, "Save profile to a file")
-	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "Specify a name for the seccomp profile")
+	buildCmd.Flags().StringSliceVarP(&syscallSets, "add-syscall-sets", "s", []string{}, fmt.Sprintf("add syscall sets to the final list (available sets: %s, %s, %s)", dynamicBin, staticBin, dockerEnv))
+	buildCmd.Flags().BoolVarP(&syscallVariants, "add-syscall-variants", "V", false, "add syscall variants to the final list")
+	buildCmd.Flags().BoolVarP(&saveProfile, "save", "S", false, "save profile to a file")
+	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "specify a name for the seccomp profile")
+	buildCmd.Flags().StringSliceVarP(&architectures, "archs", "a", architectures, "architectures to ")
 }
 
 // validateSyscallsSets ensure all the passed values are correct

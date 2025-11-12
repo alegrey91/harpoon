@@ -12,7 +12,8 @@ var SeccompProfileTemplate string
 
 // Data to hold the syscalls
 type SeccompContent struct {
-	Syscalls []string
+	Architectures []string
+	Syscalls      []string
 }
 
 // sub1 is a helper function to subtract 1 from an integer
@@ -21,7 +22,7 @@ func sub1(i int) int {
 }
 
 // BuildProfile builds the seccomp profile from the list of syscalls
-func BuildProfile(syscalls []string) (string, error) {
+func BuildProfile(syscalls []string, architectures []string) (string, error) {
 	// Parse the template
 	tmpl, err := template.New("seccomp").Funcs(template.FuncMap{
 		"sub1": sub1,
@@ -32,7 +33,8 @@ func BuildProfile(syscalls []string) (string, error) {
 
 	// Prepare the data
 	data := SeccompContent{
-		Syscalls: syscalls,
+		Architectures: architectures,
+		Syscalls:      syscalls,
 	}
 
 	// Execute the template
