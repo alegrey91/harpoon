@@ -11,7 +11,11 @@ build-static-libbpfgo:
 	make libbpfgo-static
 
 vmlinux.h:
-	bpftool btf dump file /sys/kernel/btf/vmlinux format c > ebpf/vmlinux.h
+	@if [ -e ebpf/vmlinux.h ]; then \
+    	echo "vmlinux.h file exists";\
+	else\
+		bpftool btf dump file /sys/kernel/btf/vmlinux format c > ebpf/vmlinux.h;\
+	fi
 
 build-bpf: create-output-dir
 	clang -g -O2 -c -target bpf -D__TARGET_ARCH_x86 -o ${OUTPUT_DIR}/ebpf.o ebpf/ebpf.c
