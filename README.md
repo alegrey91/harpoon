@@ -78,6 +78,14 @@ Install dependencies (for Ubuntu):
 * `libseccomp-dev`
 * `linux-tools-generic` (for `bpftool`)
 
+Install dependencies (for Fedora):
+
+* `clang`
+* `libbpf-devel`
+* `libseccomp-devel`
+* `elfutils-libelf-devel`
+* `bpftool`
+
 Build the application:
 
 ```sh
