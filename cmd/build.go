@@ -161,7 +161,7 @@ func init() {
 	buildCmd.Flags().BoolVarP(&syscallVariants, "add-syscall-variants", "V", false, "add syscall variants to the final list")
 	buildCmd.Flags().BoolVarP(&saveProfile, "save", "S", false, "save profile to a file")
 	buildCmd.Flags().StringVarP(&profileName, "name", "n", profileName, "specify a name for the seccomp profile")
-	buildCmd.Flags().StringSliceVarP(&architectures, "archs", "a", architectures, "architectures to ")
+	buildCmd.Flags().StringSliceVarP(&architectures, "archs", "a", architectures, "profile architectures to be used for system calls")
 }
 
 // validateSyscallsSets ensure all the passed values are correct
