@@ -7,7 +7,7 @@ toolchain go1.23.2
 require (
 	github.com/aquasecurity/libbpfgo v0.6.0-libbpf-1.3.0.20240111220235-90dbffffbdab
 	github.com/aquasecurity/libbpfgo/helpers v0.4.5
-	github.com/seccomp/libseccomp-golang v0.10.0
+	github.com/seccomp/libseccomp-golang v0.11.1
 	golang.org/x/arch v0.7.0
 )
 
