@@ -1,5 +1,6 @@
 {
     "defaultAction": "SCMP_ACT_ERRNO",
+    "defaultErrnoRet": 99,
     "architectures": [
         {{- range $index, $arch := .Architectures }}
         "{{$arch}}"{{if ne $index (sub1 (len $.Architectures))}},{{end}}

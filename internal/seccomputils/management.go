@@ -24,13 +24,21 @@ import (
 	libseccomp "github.com/seccomp/libseccomp-golang"
 )
 
-// Profile represents a seccomp profile containing a list of allowed syscalls.
+// This is a simple representation of a seccomp profile that we can load from a JSON file.
 type Profile struct {
-	Syscalls []string `json:"syscalls"`
+	DefaultAction   string    `json:"defaultAction"`
+	DefaultErrnoRet int       `json:"defaultErrnoRet"`
+	Architectures   []string  `json:"architectures"`
+	Syscalls        []Syscall `json:"syscalls"`
+}
+
+type Syscall struct {
+	Names  []string `json:"names"`
+	Action string   `json:"action"`
 }
 
 // LoadProfile reads and parses a seccomp profile from the given file path.
-// The profile is expected to be a JSON file with a "syscalls" field containing
+// The profile is expected to be a JSON file with a "allow_syscalls" field containing
 // a list of syscall names to be allowed.
 func LoadProfile(profilePath string) (*Profile, error) {
 	data, err := os.ReadFile(profilePath)
@@ -41,10 +49,6 @@ func LoadProfile(profilePath string) (*Profile, error) {
 	var profile Profile
 	if err := json.Unmarshal(data, &profile); err != nil {
 		return nil, fmt.Errorf("error parsing seccomp profile %s: %w", profilePath, err)
-	}
-
-	if len(profile.Syscalls) == 0 {
-		return nil, fmt.Errorf("seccomp profile %s contains no syscalls", profilePath)
 	}
 
 	return &profile, nil
@@ -60,15 +64,10 @@ func ApplyFilter(profile *Profile) error {
 		return fmt.Errorf("error creating seccomp filter: %w", err)
 	}
 
-	// Whitelist each syscall from the profile.
-	for _, name := range profile.Syscalls {
-		syscallID, err := libseccomp.GetSyscallFromName(name)
-		if err != nil {
-			return fmt.Errorf("error resolving syscall name %q: %w", name, err)
-		}
-		if err := filter.AddRule(syscallID, libseccomp.ActAllow); err != nil {
-			return fmt.Errorf("error adding rule for syscall %q: %w", name, err)
-		}
+	// Apply "allow" filters from the profile.
+	filter, err = actAllowFilters(profile, filter)
+	if err != nil {
+		return fmt.Errorf("error applying allow filters: %w", err)
 	}
 
 	// Load (apply) the filter to the current process.
@@ -77,4 +76,24 @@ func ApplyFilter(profile *Profile) error {
 	}
 
 	return nil
+}
+
+func actAllowFilters(profile *Profile, filter *libseccomp.ScmpFilter) (*libseccomp.ScmpFilter, error) {
+	// Whitelist each syscall from the profile.
+	for _, syscall := range profile.Syscalls {
+		if syscall.Action != "SCMP_ACT_ALLOW" {
+			continue
+		}
+		for _, name := range syscall.Names {
+			syscallID, err := libseccomp.GetSyscallFromName(name)
+			if err != nil {
+				return nil, fmt.Errorf("error resolving syscall name %q: %w", name, err)
+			}
+			if err := filter.AddRule(syscallID, libseccomp.ActAllow); err != nil {
+				return nil, fmt.Errorf("error adding rule for syscall %q: %w", name, err)
+			}
+		}
+	}
+
+	return filter, nil
 }

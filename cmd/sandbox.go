@@ -17,9 +17,8 @@ package cmd
 
 import (
 	"fmt"
-	"sync"
+	"syscall"
 
-	"github.com/alegrey91/harpoon/internal/executor"
 	"github.com/alegrey91/harpoon/internal/seccomputils"
 	"github.com/spf13/cobra"
 )
@@ -52,58 +51,58 @@ var sandboxCmd = &cobra.Command{
 
 		// Apply the seccomp filter to the current process before launching
 		// the child. The filter is inherited by child processes on exec.
+		fmt.Println("Apply filter")
 		if err := seccomputils.ApplyFilter(profile); err != nil {
 			return fmt.Errorf("error applying seccomp filter: %w", err)
 		}
 
-		// Set up channels to collect stdout/stderr from the executed program.
-		cmdStdoutCh := make(chan string)
-		cmdStderrCh := make(chan string)
-		var wg sync.WaitGroup
-		wg.Add(1)
+		err = syscall.Exec(args[0], args, nil)
+		if err != nil {
+			return fmt.Errorf("error executing command: %w", err)
+		}
+		//// Set up channels to collect stdout/stderr from the executed program.
+		//cmdStdoutCh := make(chan string)
+		//cmdStderrCh := make(chan string)
+		//var wg sync.WaitGroup
+		//wg.Add(1)
 
-		// Run the program using the shared executor.
-		go executor.Run(
-			args,
-			sandboxEnvVars,
-			sandboxCommandOutput,
-			sandboxCommandError,
-			&wg,
-			cmdStdoutCh,
-			cmdStderrCh,
-		)
+		//// Run the program using the shared executor.
+		//fmt.Println("running program:", args[0])
+		//go executor.Run(
+		//	args,
+		//	sandboxEnvVars,
+		//	sandboxCommandOutput,
+		//	sandboxCommandError,
+		//	&wg,
+		//	cmdStdoutCh,
+		//	cmdStderrCh,
+		//)
 
-		// Drain stdout and stderr channels while the command is running.
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			for {
-				select {
-				case line, ok := <-cmdStdoutCh:
-					if !ok {
-						cmdStdoutCh = nil
-					} else {
-						fmt.Println(line)
-					}
-				case line, ok := <-cmdStderrCh:
-					if !ok {
-						cmdStderrCh = nil
-					} else {
-						fmt.Fprintln(cmd.ErrOrStderr(), line)
-					}
-				}
-				if cmdStdoutCh == nil && cmdStderrCh == nil {
-					return
-				}
-			}
-		}()
+		//// Drain stdout and stderr channels while the command is running.
+		//go func() {
+		//	for {
+		//		select {
+		//		case line, ok := <-cmdStdoutCh:
+		//			// managing stdout from executed command
+		//			if !ok {
+		//				break
+		//			}
+		//			fmt.Println("stdout:", line)
+		//		case err, ok := <-cmdStderrCh:
+		//			// managing stderr from executed command
+		//			if !ok {
+		//				break
+		//			}
+		//			fmt.Println("stderr:", err)
+		//		}
+		//	}
+		//}()
 
-		// Wait for the command to finish, then close the I/O channels and
-		// wait for the drainer goroutine to exit.
-		wg.Wait()
-		close(cmdStdoutCh)
-		close(cmdStderrCh)
-		<-done
+		//// Wait for the command to finish, then close the I/O channels and
+		//// wait for the drainer goroutine to exit.
+		//wg.Wait()
+		//close(cmdStdoutCh)
+		//close(cmdStderrCh)
 		return nil
 	},
 }
@@ -115,7 +114,6 @@ func init() {
 	sandboxCmd.MarkFlagRequired("profile")
 
 	sandboxCmd.Flags().StringSliceVarP(&sandboxEnvVars, "env-var", "E", []string{}, "Environment variable to be passed to the executed command")
-
 	sandboxCmd.Flags().BoolVarP(&sandboxCommandOutput, "include-cmd-stdout", "c", false, "Include the executed command output")
 	sandboxCmd.Flags().BoolVarP(&sandboxCommandError, "include-cmd-stderr", "e", false, "Include the executed command error")
 }
