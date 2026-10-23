@@ -134,7 +134,7 @@ var buildCmd = &cobra.Command{
 		if saveProfile {
 			profileFile, err := os.Create(profileName)
 			if err != nil {
-				return fmt.Errorf("error creating seccomp file %s: %w", profileFile.Name(), err)
+				return fmt.Errorf("error creating seccomp file %s: %w", profileName, err)
 			}
 			defer profileFile.Close()
 
